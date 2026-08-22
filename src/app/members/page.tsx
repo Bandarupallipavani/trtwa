@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { db } from "../../lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
 
 interface Member {
   id: string;
@@ -18,16 +20,11 @@ export default function MembersPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    const stored = localStorage.getItem("trtwa_members");
-    if (stored) {
-      setMembers(JSON.parse(stored));
-    } else {
-      const mock = [
-        { id: "TRT-001", name: "Ramesh Kumar", phone: "9876543210", dob: "1985-05-12", role: "Senior Technician", bloodGroup: "O+", address: "123 Main St, Springfield" }
-      ];
-      setMembers(mock);
-      localStorage.setItem("trtwa_members", JSON.stringify(mock));
-    }
+    const unsubscribe = onSnapshot(collection(db, "members"), (snapshot) => {
+      const membersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Member[];
+      setMembers(membersData);
+    });
+    return () => unsubscribe();
   }, []);
 
   const downloadIDCard = (member: Member) => {

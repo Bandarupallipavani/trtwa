@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { db } from "../../../lib/firebase";
+import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 
 export default function AddMemberPage() {
   const router = useRouter();
@@ -18,15 +20,14 @@ export default function AddMemberPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const stored = localStorage.getItem("trtwa_members");
-    const members = stored ? JSON.parse(stored) : [];
-    const newId = `TRT-00${members.length + 1}`;
+    const querySnapshot = await getDocs(collection(db, "members"));
+    const membersCount = querySnapshot.size;
+    const newId = `TRT-${String(membersCount + 1).padStart(3, '0')}`;
     
-    const newMember = { ...formData, id: newId };
-    members.push(newMember);
-    localStorage.setItem("trtwa_members", JSON.stringify(members));
+    const newMember = { ...formData, id: newId, isPermitted: false };
+    await setDoc(doc(db, "members", newId), newMember);
     
     router.push("/members");
   };

@@ -3,17 +3,23 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
+import { db } from "../../../lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
+
 export default function UserProfilePage() {
   const { id } = useParams();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("trtwa_members");
-    if (stored) {
-      const members = JSON.parse(stored);
-      const found = members.find((m: any) => m.id === id);
-      setUser(found);
-    }
+    if (typeof id !== "string") return;
+    const unsubscribe = onSnapshot(doc(db, "members", id), (docSnap) => {
+      if (docSnap.exists()) {
+        setUser({ id: docSnap.id, ...docSnap.data() });
+      } else {
+        setUser(null);
+      }
+    });
+    return () => unsubscribe();
   }, [id]);
 
   if (!user) {

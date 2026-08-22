@@ -2,6 +2,9 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { db } from "../../lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
+
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -19,16 +22,13 @@ export default function LoginPage() {
   const [ads, setAds] = useState<any[]>([]);
 
   React.useEffect(() => {
-    const storedAds = localStorage.getItem("trtwa_ads");
-    if (storedAds) {
-      setAds(JSON.parse(storedAds));
-    } else {
-      const defaultAds = [
-        { id: 1, type: "video", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
-        { id: 2, type: "image", url: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=800&q=80" }
-      ];
-      setAds(defaultAds);
-    }
+    const unsubscribe = onSnapshot(collection(db, "ads"), (snapshot) => {
+      if (!snapshot.empty) {
+        const adsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        setAds(adsData);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   return (

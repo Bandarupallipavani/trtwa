@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { db } from "../../lib/firebase";
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
 export default function AdminDashboardPage() {
   const [members, setMembers] = useState<any[]>([]);
@@ -9,42 +11,45 @@ export default function AdminDashboardPage() {
   const [newAd, setNewAd] = useState({ type: "image", url: "" });
 
   useEffect(() => {
-    const storedAds = localStorage.getItem("trtwa_ads");
-    if (storedAds) {
-      setAds(JSON.parse(storedAds));
-    } else {
-      const defaultAds = [
-        { id: 1, type: "video", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
-        { id: 2, type: "image", url: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=800&q=80" }
-      ];
-      setAds(defaultAds);
-      localStorage.setItem("trtwa_ads", JSON.stringify(defaultAds));
-    }
-    const stored = localStorage.getItem("trtwa_members");
-    if (stored) {
-      setMembers(JSON.parse(stored));
-    }
+    // Listen to Ads
+    const unsubscribeAds = onSnapshot(collection(db, "ads"), (snapshot) => {
+      if (snapshot.empty) {
+        const defaultAds = [
+          { id: "1", type: "video", url: "https://www.w3schools.com/html/mov_bbb.mp4" },
+          { id: "2", type: "image", url: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=800&q=80" }
+        ];
+        defaultAds.forEach(ad => setDoc(doc(db, "ads", ad.id), ad));
+      } else {
+        const adsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        setAds(adsData);
+      }
+    });
+
+    // Listen to Members
+    const unsubscribeMembers = onSnapshot(collection(db, "members"), (snapshot) => {
+      const membersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setMembers(membersData);
+    });
+
+    return () => {
+      unsubscribeAds();
+      unsubscribeMembers();
+    };
   }, []);
 
   const [editingMember, setEditingMember] = useState<any>(null);
 
-  const togglePermission = (id: string) => {
-    const updated = members.map(m => {
-      if (m.id === id) {
-        return { ...m, isPermitted: !m.isPermitted };
-      }
-      return m;
-    });
-    setMembers(updated);
-    localStorage.setItem("trtwa_members", JSON.stringify(updated));
+  const togglePermission = async (id: string) => {
+    const member = members.find(m => m.id === id);
+    if (member) {
+      await updateDoc(doc(db, "members", id), { isPermitted: !member.isPermitted });
+    }
   };
 
-  const handleEditSave = (e: React.FormEvent) => {
+  const handleEditSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingMember) return;
-    const updated = members.map(m => m.id === editingMember.id ? editingMember : m);
-    setMembers(updated);
-    localStorage.setItem("trtwa_members", JSON.stringify(updated));
+    await updateDoc(doc(db, "members", editingMember.id), editingMember);
     setEditingMember(null);
   };
 
@@ -73,19 +78,16 @@ export default function AdminDashboardPage() {
     document.body.removeChild(link);
   };
 
-  const addAd = (e: React.FormEvent) => {
+  const addAd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAd.url) return;
-    const updated = [...ads, { id: Date.now(), ...newAd }];
-    setAds(updated);
-    localStorage.setItem("trtwa_ads", JSON.stringify(updated));
+    const id = Date.now().toString();
+    await setDoc(doc(db, "ads", id), { ...newAd });
     setNewAd({ type: "image", url: "" });
   };
 
-  const removeAd = (id: number) => {
-    const updated = ads.filter(a => a.id !== id);
-    setAds(updated);
-    localStorage.setItem("trtwa_ads", JSON.stringify(updated));
+  const removeAd = async (id: string) => {
+    await deleteDoc(doc(db, "ads", id));
   };
 
   const sendWhatsApp = (member: any) => {

@@ -1,51 +1,52 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 
+import { db } from "../../lib/firebase";
+import { collection, onSnapshot, addDoc, query, orderBy, serverTimestamp } from "firebase/firestore";
+
 export default function UnionCommunityPage() {
   const [members, setMembers] = useState<any[]>([]);
-  const [messages, setMessages] = useState<{sender: string, text: string, time: string}[]>([]);
+  const [messages, setMessages] = useState<{id?: string, sender: string, text: string, time: string}[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load members
-    const storedMembers = localStorage.getItem("trtwa_members");
-    if (storedMembers) {
-      const parsed = JSON.parse(storedMembers);
-      setMembers(parsed.filter((m: any) => m.isPermitted));
-    }
+    // Listen to Members
+    const unsubscribeMembers = onSnapshot(collection(db, "members"), (snapshot) => {
+      const membersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setMembers(membersData.filter((m: any) => m.isPermitted));
+    });
 
-    // Load messages
-    const storedChat = localStorage.getItem("trtwa_chat");
-    if (storedChat) {
-      setMessages(JSON.parse(storedChat));
-    }
+    // Listen to Chat Messages
+    const q = query(collection(db, "chat"), orderBy("timestamp", "asc"));
+    const unsubscribeChat = onSnapshot(q, (snapshot) => {
+      const chatData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      setMessages(chatData);
+    });
 
-    // Simulate real-time chat sync across tabs (polling local storage for the prototype)
-    const interval = setInterval(() => {
-      const chat = localStorage.getItem("trtwa_chat");
-      if (chat) setMessages(JSON.parse(chat));
-    }, 2000);
-    return () => clearInterval(interval);
+    return () => {
+      unsubscribeMembers();
+      unsubscribeChat();
+    };
   }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const msg = {
-      sender: "Me (Current User)", // In a real app, this would be the logged-in user's name
+    const currentUser = localStorage.getItem("trtwa_current_user") || "Anonymous";
+
+    await addDoc(collection(db, "chat"), {
+      sender: currentUser,
       text: newMessage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: serverTimestamp()
+    });
     
-    const updated = [...messages, msg];
-    setMessages(updated);
-    localStorage.setItem("trtwa_chat", JSON.stringify(updated));
     setNewMessage("");
   };
 
