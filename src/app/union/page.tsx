@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 
-import { db } from "../../lib/firebase";
+import { auth, db } from "../../lib/firebase";
 import { collection, onSnapshot, addDoc, query, orderBy, serverTimestamp } from "firebase/firestore";
 
 export default function UnionCommunityPage() {
@@ -38,10 +38,11 @@ export default function UnionCommunityPage() {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const currentUser = localStorage.getItem("trtwa_current_user") || "Anonymous";
+    const currentUser = auth.currentUser;
+    const senderName = localStorage.getItem("trtwa_current_user") || currentUser?.email || "Anonymous";
 
     await addDoc(collection(db, "chat"), {
-      sender: currentUser,
+      sender: senderName,
       text: newMessage,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       timestamp: serverTimestamp()

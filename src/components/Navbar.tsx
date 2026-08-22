@@ -2,25 +2,33 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { auth } from "../lib/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
 export default function Navbar() {
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // Check auth state on mount and when path changes
-    const user = localStorage.getItem("trtwa_current_user");
-    setCurrentUser(user);
-  }, [pathname]);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        setIsAdmin(user.email === "admin@trtwa.com");
+      } else {
+        setIsAdmin(false);
+        localStorage.removeItem("trtwa_current_user");
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut(auth);
     localStorage.removeItem("trtwa_current_user");
-    setCurrentUser(null);
     router.push("/login");
   };
-
-  const isAdmin = currentUser?.toLowerCase() === "admin";
 
   const handleShare = async () => {
     const shareData = {
@@ -51,14 +59,16 @@ export default function Navbar() {
         <button onClick={handleShare} className="btn btn-secondary" style={{ padding: "0.5rem 1rem", background: "transparent", border: "1px solid var(--border-color)" }}>Share App</button>
         {currentUser ? (
           <>
-            <Link href={isAdmin ? "/admin" : `/user/${currentUser}`}>Profile</Link>
+            <Link href={isAdmin ? "/admin" : `/user/${currentUser.uid}`}>Profile</Link>
             <Link href="/union">Union Chat</Link>
             <Link href="/members">Members</Link>
+            <Link href="/rules">Rules & Bylaws</Link>
             {isAdmin && <Link href="/support">Tickets</Link>}
             <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: "0.5rem 1rem" }}>Logout</button>
           </>
         ) : (
           <>
+            <Link href="/rules">Rules & Bylaws</Link>
             <Link href="/support/public">Public Support</Link>
             <Link href="/login" className="btn">Login</Link>
           </>
