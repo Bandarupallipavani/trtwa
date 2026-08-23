@@ -34,22 +34,27 @@ export default function SignUpPage() {
       const trtId = `TRT-${Math.floor(Math.random() * 9000) + 1000}`;
 
       // 3. Save User Data to Firestore
+      const isAdmin = formData.email.toLowerCase() === "admin@trtwa.com";
       await setDoc(doc(db, "members", user.uid), {
-        id: trtId, // Official Union ID
+        id: isAdmin ? "TRT-ADMIN" : trtId, // Official Union ID
         uid: user.uid,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        role: formData.role,
+        role: isAdmin ? "Admin" : formData.role,
         bloodGroup: formData.bloodGroup,
         address: formData.address,
-        isPermitted: false, // Requires Admin approval
+        isPermitted: isAdmin ? true : false, // Admin is auto-permitted
         photo: ""
       });
 
       // 4. Redirect to User Profile/Dashboard
-      localStorage.setItem("trtwa_current_user", formData.name);
-      router.push(`/user/${user.uid}`);
+      localStorage.setItem("trtwa_current_user", isAdmin ? "Admin" : formData.name);
+      if (isAdmin) {
+        router.push("/admin");
+      } else {
+        router.push(`/user/${user.uid}`);
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to create account");
