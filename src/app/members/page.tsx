@@ -86,11 +86,14 @@ export default function MembersPage() {
                 
                 <div class="main-info">
                   ${member.photo ? `<img src="${member.photo}" class="photo" />` : `<div class="photo"></div>`}
-                  <div class="details">
-                    <p><strong>Name:</strong> ${member.name}</p>
-                    <p><strong>ID No:</strong> ${member.id}</p>
-                    <p><strong>Phone:</strong> ${member.phone}</p>
-                    <p><strong>Blood Grp:</strong> <span style="color: red; font-weight: bold;">${member.bloodGroup || 'N/A'}</span></p>
+                  <div style="display: flex; gap: 15px; align-items: center; justify-content: center; width: 100%;">
+                    <div class="details" style="margin: 0;">
+                      <p><strong>Name:</strong> ${member.name}</p>
+                      <p><strong>ID No:</strong> ${member.id}</p>
+                      <p><strong>Phone:</strong> ${member.phone}</p>
+                      <p><strong>Blood Grp:</strong> <span style="color: red; font-weight: bold;">${member.bloodGroup || 'N/A'}</span></p>
+                    </div>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(`Name: ${member.name}\nMobile: ${member.phone}\nBlood Group: ${member.bloodGroup || 'N/A'}`)}" style="width: 50px; height: 50px;" />
                   </div>
                 </div>
                 
@@ -99,7 +102,6 @@ export default function MembersPage() {
                     <div class="sig-line"></div>
                     <div class="sig-text">Authorised Signature</div>
                   </div>
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(`Name: ${member.name}\nMobile: ${member.phone}\nBlood Group: ${member.bloodGroup || 'N/A'}`)}" style="width: 50px; height: 50px; margin-bottom: 5px;" />
                 </div>
               </div>
               
