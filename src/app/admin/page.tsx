@@ -27,7 +27,7 @@ export default function AdminDashboardPage() {
 
     // Listen to Members
     const unsubscribeMembers = onSnapshot(collection(db, "members"), (snapshot) => {
-      const membersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const membersData = snapshot.docs.map(d => ({ ...d.data(), uid: d.id }));
       setMembers(membersData);
     });
 
@@ -40,16 +40,17 @@ export default function AdminDashboardPage() {
   const [editingMember, setEditingMember] = useState<any>(null);
 
   const togglePermission = async (id: string) => {
+    // Note: id here is the TRT ID, we need to find the member and use its uid
     const member = members.find(m => m.id === id);
     if (member) {
-      await updateDoc(doc(db, "members", id), { isPermitted: !member.isPermitted });
+      await updateDoc(doc(db, "members", member.uid), { isPermitted: !member.isPermitted });
     }
   };
 
   const handleEditSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingMember) return;
-    await updateDoc(doc(db, "members", editingMember.id), editingMember);
+    await updateDoc(doc(db, "members", editingMember.uid), editingMember);
     setEditingMember(null);
   };
 
