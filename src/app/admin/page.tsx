@@ -125,7 +125,8 @@ export default function AdminDashboardPage() {
             />
           </div>
         </div>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="table-responsive">
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
               <th style={{ padding: "1rem 1.5rem" }}>ID</th>
@@ -175,6 +176,7 @@ export default function AdminDashboardPage() {
             ))}
           </tbody>
         </table>
+        </div>
         {members.filter(m => 
           (m.address || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
           (m.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||

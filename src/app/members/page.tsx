@@ -134,34 +134,36 @@ export default function MembersPage() {
       </div>
 
       <div className="card" style={{ padding: "0" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
-              <th style={{ padding: "1rem 1.5rem" }}>ID</th>
-              <th style={{ padding: "1rem 1.5rem" }}>Name</th>
-              <th style={{ padding: "1rem 1.5rem" }}>Role</th>
-              <th style={{ padding: "1rem 1.5rem" }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.filter(m => 
-              (m.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (m.id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (m.phone || "").toLowerCase().includes(searchQuery.toLowerCase())
-            ).map(member => (
-              <tr key={member.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
-                <td style={{ padding: "1rem 1.5rem" }}>{member.id}</td>
-                <td style={{ padding: "1rem 1.5rem", fontWeight: 500 }}>{member.name}</td>
-                <td style={{ padding: "1rem 1.5rem", color: "var(--text-secondary)" }}>{member.role}</td>
-                <td style={{ padding: "1rem 1.5rem" }}>
-                  <button className="btn btn-secondary" style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }} onClick={() => downloadIDCard(member)}>
-                    Generate ID
-                  </button>
-                </td>
+        <div className="table-responsive">
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
+                <th style={{ padding: "1rem 1.5rem" }}>ID</th>
+                <th style={{ padding: "1rem 1.5rem" }}>Name</th>
+                <th style={{ padding: "1rem 1.5rem" }}>Role</th>
+                <th style={{ padding: "1rem 1.5rem" }}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {members.filter(m => 
+                (m.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (m.id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (m.phone || "").toLowerCase().includes(searchQuery.toLowerCase())
+              ).map(member => (
+                <tr key={member.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
+                  <td style={{ padding: "1rem 1.5rem" }}>{member.id}</td>
+                  <td style={{ padding: "1rem 1.5rem", fontWeight: 500 }}>{member.name}</td>
+                  <td style={{ padding: "1rem 1.5rem", color: "var(--text-secondary)" }}>{member.role}</td>
+                  <td style={{ padding: "1rem 1.5rem" }}>
+                    <button className="btn btn-secondary" style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }} onClick={() => downloadIDCard(member)}>
+                      Generate ID
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {members.filter(m => 
           (m.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
           (m.id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||

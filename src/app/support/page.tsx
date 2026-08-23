@@ -57,6 +57,7 @@ export default function TechnicianSupportPage() {
       </div>
 
       <div className="card" style={{ padding: 0 }}>
+        <div className="table-responsive">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left" }}>
@@ -111,6 +112,7 @@ export default function TechnicianSupportPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
