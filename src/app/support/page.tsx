@@ -1,12 +1,21 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { db } from "../../lib/firebase";
+import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
 
 export default function TechnicianSupportPage() {
-  const tickets = [
-    { id: "REQ-4092", customer: "John Doe", issue: "RO filter needs replacement", status: "Open", address: "123 Main St, Springfield", device: "Aquaguard RO" },
-    { id: "REQ-8123", customer: "Alice Smith", issue: "Water pressure is too low", status: "In Progress", address: "456 Oak Ave, Metropolis", device: "Kent Grand+" }
-  ];
+  const [tickets, setTickets] = useState<any[]>([]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "tickets"), (snapshot) => {
+      const ticketsData = snapshot.docs.map(d => ({ dbId: d.id, ...d.data() }));
+      // Sort by newest first (descending)
+      ticketsData.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      setTickets(ticketsData);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const exportToCSV = () => {
     const headers = ["Ticket ID", "Customer", "Address", "Device", "Issue", "Status"];
@@ -20,8 +29,8 @@ export default function TechnicianSupportPage() {
     ]);
     
     const csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\\n" 
-      + rows.map(e => e.join(",")).join("\\n");
+      + headers.join(",") + "\n" 
+      + rows.map(e => e.join(",")).join("\n");
       
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -30,6 +39,11 @@ export default function TechnicianSupportPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const toggleStatus = async (ticket: any) => {
+    const nextStatus = ticket.status === "Open" ? "In Progress" : (ticket.status === "In Progress" ? "Closed" : "Open");
+    await updateDoc(doc(db, "tickets", ticket.dbId), { status: nextStatus });
   };
 
   return (
@@ -57,9 +71,9 @@ export default function TechnicianSupportPage() {
           </thead>
           <tbody>
             {tickets.map(t => (
-              <tr key={t.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
+              <tr key={t.dbId} style={{ borderBottom: "1px solid var(--border-color)" }}>
                 <td style={{ padding: "1rem 1.5rem", fontWeight: 500 }}>{t.id}</td>
-                <td style={{ padding: "1rem 1.5rem" }}>{t.customer}</td>
+                <td style={{ padding: "1rem 1.5rem" }}>{t.name}</td>
                 <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem" }}>{t.address}</td>
                 <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem" }}>{t.device}</td>
                 <td style={{ padding: "1rem 1.5rem", color: "var(--text-secondary)" }}>{t.issue}</td>
@@ -68,8 +82,8 @@ export default function TechnicianSupportPage() {
                     padding: "0.25rem 0.75rem", 
                     borderRadius: "999px", 
                     fontSize: "0.875rem",
-                    background: t.status === "Open" ? "rgba(245, 158, 11, 0.2)" : "rgba(16, 185, 129, 0.2)",
-                    color: t.status === "Open" ? "var(--accent-color)" : "var(--success-color)"
+                    background: t.status === "Open" ? "rgba(245, 158, 11, 0.2)" : (t.status === "Closed" ? "rgba(107, 114, 128, 0.2)" : "rgba(16, 185, 129, 0.2)"),
+                    color: t.status === "Open" ? "var(--accent-color)" : (t.status === "Closed" ? "#6b7280" : "var(--success-color)")
                   }}>
                     {t.status}
                   </span>
@@ -84,13 +98,21 @@ export default function TechnicianSupportPage() {
                   >
                     Map
                   </a>
-                  <button className="btn btn-secondary" style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>Update</button>
+                  <button onClick={() => toggleStatus(t)} className="btn btn-secondary" style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>Update</button>
                 </td>
               </tr>
             ))}
+            {tickets.length === 0 && (
+              <tr>
+                <td colSpan={7} style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)" }}>
+                  No service tickets found. Customer requests will appear here.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
     </div>
   );
 }
+
