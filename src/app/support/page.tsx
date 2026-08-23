@@ -9,7 +9,7 @@ export default function TechnicianSupportPage() {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "tickets"), (snapshot) => {
-      const ticketsData = snapshot.docs.map(d => ({ dbId: d.id, ...d.data() }));
+      const ticketsData = snapshot.docs.map(d => ({ dbId: d.id, ...d.data() } as any));
       // Sort by newest first (descending)
       ticketsData.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setTickets(ticketsData);
