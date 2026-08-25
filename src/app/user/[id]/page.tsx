@@ -4,12 +4,13 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 
 import { db } from "../../../lib/firebase";
-import { doc, collection, onSnapshot } from "firebase/firestore";
+import { doc, collection, onSnapshot, updateDoc } from "firebase/firestore";
 
 export default function UserProfilePage() {
   const { id } = useParams();
   const [user, setUser] = useState<any>(null);
   const [news, setNews] = useState<any[]>([]);
+  const [elections, setElections] = useState<any[]>([]);
 
   useEffect(() => {
     if (typeof id !== "string") return;
@@ -27,11 +28,30 @@ export default function UserProfilePage() {
       setNews(newsData);
     });
 
+    const unsubscribeElections = onSnapshot(collection(db, "elections"), (snapshot) => {
+      const electionsData = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as any));
+      electionsData.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      setElections(electionsData);
+    });
+
     return () => {
       unsubscribeUser();
       unsubscribeNews();
+      unsubscribeElections();
     };
   }, [id]);
+
+  const castVote = async (electionId: string, option: string) => {
+    if (typeof id !== "string") return;
+    try {
+      const election = elections.find(e => e.id === electionId);
+      if (!election) return;
+      const newVotes = { ...election.votes, [id]: option };
+      await updateDoc(doc(db, "elections", electionId), { votes: newVotes });
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   if (!user) {
     return <div style={{ textAlign: "center", marginTop: "4rem" }}>User not found.</div>;
@@ -106,9 +126,54 @@ export default function UserProfilePage() {
               news.map(item => (
                 <div key={item.id} style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "1rem" }}>
                   <p style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>{item.text}</p>
+                  {item.attachmentUrl && (
+                    <a href={item.attachmentUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", color: "var(--primary-color)", fontWeight: "bold", marginBottom: "0.5rem", textDecoration: "none" }}>
+                      📄 View PDF Attachment
+                    </a>
+                  )}
+                  <br />
                   <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{new Date(item.createdAt).toLocaleString()}</span>
                 </div>
               ))
+            )}
+          </div>
+        </div>
+        
+        <div className="card" style={{ flex: "1 1 350px", padding: 0 }}>
+          <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+            <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Active Union Votes</h2>
+            <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Cast your vote for active union elections.</p>
+          </div>
+          <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", maxHeight: "400px", overflowY: "auto" }}>
+            {elections.filter(e => e.isActive).length === 0 ? (
+              <div style={{ color: "var(--text-secondary)", textAlign: "center" }}>No active elections right now.</div>
+            ) : (
+              elections.filter(e => e.isActive).map(election => {
+                const hasVoted = typeof id === "string" && election.votes && election.votes[id];
+                return (
+                  <div key={election.id} style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "1rem" }}>
+                    <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>{election.title}</h3>
+                    {hasVoted ? (
+                      <div style={{ background: "rgba(16, 185, 129, 0.1)", color: "var(--success-color)", padding: "1rem", borderRadius: "8px", textAlign: "center", fontWeight: "bold" }}>
+                        ✅ Vote Submitted
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                        {election.options.map((opt: string) => (
+                          <button 
+                            key={opt}
+                            onClick={() => castVote(election.id, opt)}
+                            className="btn btn-secondary" 
+                            style={{ width: "100%", textAlign: "left", padding: "0.75rem 1rem" }}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

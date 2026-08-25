@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { auth, db } from "../../lib/firebase";
+import { auth, db, storage } from "../../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, onSnapshot, doc, getDoc, setDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 interface Member {
   uid: string;
@@ -23,6 +24,7 @@ export default function MembersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUserData, setCurrentUserData] = useState<any>(null);
   const [newsText, setNewsText] = useState("");
+  const [newsFile, setNewsFile] = useState<File | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
@@ -49,14 +51,24 @@ export default function MembersPage() {
 
   const addNews = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newsText.trim()) return;
+    if (!newsText.trim() && !newsFile) return;
     try {
       const newId = Date.now().toString();
+      let attachmentUrl = "";
+      
+      if (newsFile) {
+        const fileRef = ref(storage, `news/${newId}_${newsFile.name}`);
+        await uploadBytes(fileRef, newsFile);
+        attachmentUrl = await getDownloadURL(fileRef);
+      }
+
       await setDoc(doc(db, "news", newId), {
         text: newsText,
+        attachmentUrl,
         createdAt: new Date().toISOString()
       });
       setNewsText("");
+      setNewsFile(null);
       alert("News updated successfully!");
     } catch (err) {
       console.error(err);
@@ -178,8 +190,15 @@ export default function MembersPage() {
                 placeholder="Write your news update here..." 
                 value={newsText} 
                 onChange={e => setNewsText(e.target.value)} 
-                required 
                 style={{ width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-primary)", resize: "vertical", minHeight: "60px" }}
+              />
+            </div>
+            <div className="input-group" style={{ margin: 0 }}>
+              <input 
+                type="file" 
+                accept="application/pdf"
+                onChange={e => setNewsFile(e.target.files?.[0] || null)}
+                style={{ padding: "0.5rem", borderRadius: "8px", border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-primary)" }}
               />
             </div>
             <button type="submit" className="btn" style={{ height: "42px" }}>Post Update</button>

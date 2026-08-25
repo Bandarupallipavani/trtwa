@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { db } from "../../lib/firebase";
+import { db, storage } from "../../lib/firebase";
 import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function AdminDashboardPage() {
   const [members, setMembers] = useState<any[]>([]);
@@ -10,8 +11,12 @@ export default function AdminDashboardPage() {
   const [ads, setAds] = useState<any[]>([]);
   const [ratings, setRatings] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
+  const [elections, setElections] = useState<any[]>([]);
   const [newAd, setNewAd] = useState({ type: "image", url: "" });
   const [newsText, setNewsText] = useState("");
+  const [newsFile, setNewsFile] = useState<File | null>(null);
+  const [newElectionTitle, setNewElectionTitle] = useState("");
+  const [newElectionOptions, setNewElectionOptions] = useState("Candidate A, Candidate B");
 
   useEffect(() => {
     // Listen to Ads
@@ -48,26 +53,74 @@ export default function AdminDashboardPage() {
       setNews(newsData);
     });
 
+    // Listen to Elections
+    const unsubscribeElections = onSnapshot(collection(db, "elections"), (snapshot) => {
+      const electionsData = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as any));
+      electionsData.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      setElections(electionsData);
+    });
+
     return () => {
       unsubscribeAds();
       unsubscribeMembers();
       unsubscribeRatings();
       unsubscribeNews();
+      unsubscribeElections();
     };
   }, []);
 
   const addNews = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newsText.trim()) return;
+    if (!newsText.trim() && !newsFile) return;
     try {
       const newId = Date.now().toString();
+      let attachmentUrl = "";
+      
+      if (newsFile) {
+        const fileRef = ref(storage, `news/${newId}_${newsFile.name}`);
+        await uploadBytes(fileRef, newsFile);
+        attachmentUrl = await getDownloadURL(fileRef);
+      }
+
       await setDoc(doc(db, "news", newId), {
         text: newsText,
+        attachmentUrl,
         createdAt: new Date().toISOString()
       });
       setNewsText("");
+      setNewsFile(null);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const createElection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newElectionTitle.trim()) return;
+    try {
+      const optionsArray = newElectionOptions.split(",").map(o => o.trim()).filter(o => o);
+      const newId = Date.now().toString();
+      await setDoc(doc(db, "elections", newId), {
+        title: newElectionTitle,
+        options: optionsArray,
+        votes: {},
+        isActive: true,
+        createdAt: new Date().toISOString()
+      });
+      setNewElectionTitle("");
+      setNewElectionOptions("Candidate A, Candidate B");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const closeElection = async (id: string) => {
+    await updateDoc(doc(db, "elections", id), { isActive: false });
+  };
+  
+  const deleteElection = async (id: string) => {
+    if (confirm("Delete this election?")) {
+      await deleteDoc(doc(db, "elections", id));
     }
   };
 
@@ -262,8 +315,16 @@ export default function AdminDashboardPage() {
                 placeholder="Write your news update here..." 
                 value={newsText} 
                 onChange={e => setNewsText(e.target.value)} 
-                required 
                 style={{ width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-primary)", resize: "vertical", minHeight: "80px" }}
+              />
+            </div>
+            <div className="input-group" style={{ margin: 0 }}>
+              <label>Attach PDF (Optional)</label>
+              <input 
+                type="file" 
+                accept="application/pdf"
+                onChange={e => setNewsFile(e.target.files?.[0] || null)}
+                style={{ width: "100%", padding: "0.5rem", borderRadius: "8px", border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-primary)" }}
               />
             </div>
             <button type="submit" className="btn" style={{ height: "42px" }}>Post Update</button>
@@ -277,11 +338,101 @@ export default function AdminDashboardPage() {
                 <div key={item.id} style={{ border: "1px solid var(--border-color)", borderRadius: "8px", padding: "1rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
                   <div>
                     <p style={{ margin: "0 0 0.5rem 0" }}>{item.text}</p>
+                    {item.attachmentUrl && (
+                      <a href={item.attachmentUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", color: "var(--primary-color)", fontWeight: "bold", marginBottom: "0.5rem", textDecoration: "none" }}>
+                        📄 View PDF Attachment
+                      </a>
+                    )}
+                    <br />
                     <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{new Date(item.createdAt).toLocaleString()}</span>
                   </div>
                   <button onClick={() => deleteNews(item.id)} className="btn btn-secondary" style={{ padding: "0.25rem 0.75rem", fontSize: "0.75rem", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.2)" }}>Delete</button>
                 </div>
               ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{ padding: 0, marginTop: "2rem" }}>
+        <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+          <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Union Voting & Elections</h2>
+          <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Create elections for union members to vote on securely.</p>
+        </div>
+        
+        <div style={{ padding: "1.5rem" }}>
+          <form onSubmit={createElection} style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem", alignItems: "flex-end" }}>
+            <div className="input-group" style={{ flex: 1, minWidth: "250px", margin: 0 }}>
+              <label>Election Title</label>
+              <input type="text" placeholder="e.g. Union President 2026" value={newElectionTitle} onChange={e => setNewElectionTitle(e.target.value)} required />
+            </div>
+            <div className="input-group" style={{ flex: 2, minWidth: "300px", margin: 0 }}>
+              <label>Options (Comma Separated)</label>
+              <input type="text" placeholder="Candidate A, Candidate B" value={newElectionOptions} onChange={e => setNewElectionOptions(e.target.value)} required />
+            </div>
+            <button type="submit" className="btn" style={{ height: "42px" }}>Create Election</button>
+          </form>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem" }}>
+            {elections.length === 0 ? (
+              <div style={{ color: "var(--text-secondary)", textAlign: "center" }}>No elections found.</div>
+            ) : (
+              elections.map(election => {
+                // Calculate votes for each option
+                const voteCounts: Record<string, number> = {};
+                election.options.forEach((opt: string) => voteCounts[opt] = 0);
+                let totalVotes = 0;
+                
+                if (election.votes) {
+                  Object.values(election.votes).forEach((vote: any) => {
+                    if (voteCounts[vote] !== undefined) {
+                      voteCounts[vote]++;
+                      totalVotes++;
+                    }
+                  });
+                }
+
+                return (
+                  <div key={election.id} style={{ border: "1px solid var(--border-color)", borderRadius: "8px", padding: "1.5rem", position: "relative" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
+                      <div>
+                        <h3 style={{ margin: "0 0 0.5rem 0" }}>{election.title}</h3>
+                        <span style={{ 
+                          display: "inline-block", padding: "0.25rem 0.5rem", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "bold",
+                          background: election.isActive ? "var(--success-color)" : "rgba(255,255,255,0.1)", color: election.isActive ? "white" : "var(--text-secondary)"
+                        }}>
+                          {election.isActive ? "ACTIVE" : "CLOSED"}
+                        </span>
+                        <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginLeft: "1rem" }}>{totalVotes} total votes</span>
+                      </div>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        {election.isActive && (
+                          <button onClick={() => closeElection(election.id)} className="btn btn-secondary" style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>Close Voting</button>
+                        )}
+                        <button onClick={() => deleteElection(election.id)} className="btn btn-secondary" style={{ padding: "0.5rem 1rem", fontSize: "0.875rem", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.2)" }}>Delete</button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                      {election.options.map((opt: string) => {
+                        const count = voteCounts[opt] || 0;
+                        const percentage = totalVotes === 0 ? 0 : Math.round((count / totalVotes) * 100);
+                        return (
+                          <div key={opt}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem", fontSize: "0.875rem" }}>
+                              <span>{opt}</span>
+                              <span style={{ fontWeight: "bold" }}>{count} votes ({percentage}%)</span>
+                            </div>
+                            <div style={{ width: "100%", height: "12px", background: "rgba(255,255,255,0.1)", borderRadius: "6px", overflow: "hidden" }}>
+                              <div style={{ width: `${percentage}%`, height: "100%", background: "var(--primary-color)", borderRadius: "6px" }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
