@@ -32,7 +32,7 @@ export default function Navbar() {
 
   const handleShare = async () => {
     const shareData = {
-      title: "TRTWA Union",
+      title: "TRT Union",
       text: "Join the Telangana RO Technician Welfare Association Portal!",
       url: window.location.origin
     };
@@ -52,8 +52,8 @@ export default function Navbar() {
   return (
     <nav className="nav-bar">
       <Link href="/" className="nav-logo" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <img src="/logo.jpeg" alt="TRTWA Logo" style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />
-        TRTWA Union
+        <img src="/logo.jpeg" alt="TRT Union Logo" style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />
+        TRT Union
       </Link>
       <div className="nav-links">
         {isAdmin && <button onClick={handleShare} className="btn btn-secondary" style={{ padding: "0.5rem 1rem", background: "transparent", border: "1px solid var(--border-color)" }}>Share App</button>}

@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
   };
 
   const sendWhatsApp = (member: any) => {
-    const text = `Hello ${member.name}, this is an official message from TRTWA Union Admin.`;
+    const text = `Hello ${member.name}, this is an official message from TRT Union Admin.`;
     // Using wa.me API. Phone number should ideally include country code, assuming India +91 if not present for prototype
     const phone = member.phone.length === 10 ? `91${member.phone}` : member.phone;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");

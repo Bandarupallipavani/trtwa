@@ -65,7 +65,7 @@ export default function UnionCommunityPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <h1 className="heading-1" style={{ margin: 0, fontSize: "1.75rem" }}>TRTWA Union Community</h1>
+        <h1 className="heading-1" style={{ margin: 0, fontSize: "1.75rem" }}>TRT Union Community</h1>
         <button onClick={() => setShowFeedbackModal(true)} className="btn btn-secondary">Send Feedback</button>
       </div>
 

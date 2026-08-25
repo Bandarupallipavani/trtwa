@@ -29,7 +29,7 @@ export default function RootLayout({
             fontSize: "0.875rem"
           }}>
             <p style={{ margin: 0 }}>
-              &copy; {new Date().getFullYear()} TRTWA Union. All rights reserved.
+              &copy; {new Date().getFullYear()} TRT Union. All rights reserved.
             </p>
             <p style={{ margin: "0.5rem 0 0 0" }}>
               Contact us at: <a href="mailto:TWTWA2006@gmail.com" style={{ color: "var(--accent-color)", textDecoration: "none" }}>TWTWA2006@gmail.com</a>

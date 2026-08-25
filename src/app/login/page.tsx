@@ -82,22 +82,36 @@ export default function LoginPage() {
   };
 
   const [ads, setAds] = useState<any[]>([]);
+  const [memberCount, setMemberCount] = useState(0);
 
   React.useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "ads"), (snapshot) => {
+    const unsubscribeAds = onSnapshot(collection(db, "ads"), (snapshot) => {
       if (!snapshot.empty) {
         const adsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         setAds(adsData);
       }
     });
-    return () => unsubscribe();
+    
+    const unsubscribeMembers = onSnapshot(collection(db, "members"), (snapshot) => {
+      setMemberCount(snapshot.size);
+    });
+
+    return () => {
+      unsubscribeAds();
+      unsubscribeMembers();
+    };
   }, []);
 
   return (
     <div style={{ maxWidth: "1100px", margin: "4rem auto", padding: "0 1rem", display: "flex", flexWrap: "wrap", gap: "3rem", alignItems: "center", justifyContent: "center" }}>
       {ads.length > 0 && (
         <div style={{ flex: "1 1 450px", maxWidth: "550px", overflow: "hidden", borderRadius: "12px", background: "rgba(255,255,255,0.05)", padding: "1.5rem" }}>
-          <h2 className="heading-2" style={{ textAlign: "center", fontSize: "1.25rem", marginBottom: "1.5rem" }}>Union Highlights</h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+            <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Union Highlights</h2>
+            <span style={{ fontSize: "0.875rem", background: "var(--primary-color)", color: "white", padding: "0.25rem 0.75rem", borderRadius: "999px" }}>
+              Total Members: {memberCount}
+            </span>
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", maxHeight: "500px", overflowY: "auto", paddingRight: "0.5rem" }}>
             {ads.map(ad => (
               <div key={ad.id} style={{ width: "100%", minHeight: "250px", borderRadius: "8px", overflow: "hidden", background: "#000" }}>
@@ -116,7 +130,7 @@ export default function LoginPage() {
         <div className="card">
           <div style={{ textAlign: "center", marginBottom: "2rem" }}>
             <h1 className="heading-2">Member Login</h1>
-            <p className="text-body" style={{ fontSize: "0.875rem" }}>Sign in to your official TRTWA union account</p>
+            <p className="text-body" style={{ fontSize: "0.875rem" }}>Sign in to your official TRT union account</p>
           </div>
           {error && <div style={{ background: "var(--error-color)", color: "white", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem" }}>{error}</div>}
           <form onSubmit={handleLogin}>
