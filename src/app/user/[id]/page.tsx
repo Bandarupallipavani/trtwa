@@ -11,6 +11,37 @@ export default function UserProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [news, setNews] = useState<any[]>([]);
   const [elections, setElections] = useState<any[]>([]);
+  const newsContainerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = newsContainerRef.current;
+    if (!container) return;
+    
+    let scrollInterval: NodeJS.Timeout;
+    const startScrolling = () => {
+      scrollInterval = setInterval(() => {
+        if (container.scrollTop + container.clientHeight >= container.scrollHeight - 1) {
+          container.scrollTop = 0;
+        } else {
+          container.scrollTop += 1;
+        }
+      }, 50);
+    };
+
+    startScrolling();
+
+    const stopScrolling = () => clearInterval(scrollInterval);
+    container.addEventListener('mouseenter', stopScrolling);
+    container.addEventListener('mouseleave', startScrolling);
+
+    return () => {
+      clearInterval(scrollInterval);
+      if (container) {
+        container.removeEventListener('mouseenter', stopScrolling);
+        container.removeEventListener('mouseleave', startScrolling);
+      }
+    };
+  }, [news]);
 
   useEffect(() => {
     if (typeof id !== "string") return;
@@ -119,7 +150,7 @@ export default function UserProfilePage() {
             <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Daily News & Updates</h2>
             <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Latest announcements from TRT Union Admin</p>
           </div>
-          <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", maxHeight: "400px", overflowY: "auto" }}>
+          <div ref={newsContainerRef} style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", maxHeight: "400px", overflowY: "auto", scrollBehavior: "smooth" }}>
             {news.length === 0 ? (
               <div style={{ color: "var(--text-secondary)", textAlign: "center" }}>No news updates yet.</div>
             ) : (
