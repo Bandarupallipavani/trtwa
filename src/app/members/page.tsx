@@ -1,10 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { db } from "../../lib/firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+import { auth, db } from "../../lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, onSnapshot, doc, getDoc, setDoc } from "firebase/firestore";
 
 interface Member {
+  uid: string;
   id: string;
   name: string;
   phone: string;
@@ -13,19 +15,53 @@ interface Member {
   address?: string;
   bloodGroup?: string;
   photo?: string;
+  isPermitted?: boolean;
 }
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentUserData, setCurrentUserData] = useState<any>(null);
+  const [newsText, setNewsText] = useState("");
 
   useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, "members", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setCurrentUserData(docSnap.data());
+        }
+      } else {
+        setCurrentUserData(null);
+      }
+    });
+
     const unsubscribe = onSnapshot(collection(db, "members"), (snapshot) => {
-      const membersData = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Member[];
+      const membersData = snapshot.docs.map(d => ({ ...d.data(), uid: d.id })) as Member[];
       setMembers(membersData);
     });
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      unsubscribe();
+    };
   }, []);
+
+  const addNews = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsText.trim()) return;
+    try {
+      const newId = Date.now().toString();
+      await setDoc(doc(db, "news", newId), {
+        text: newsText,
+        createdAt: new Date().toISOString()
+      });
+      setNewsText("");
+      alert("News updated successfully!");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const downloadIDCard = (member: Member) => {
     // Generate a simple ID card HTML, draw to canvas or just open a print window for the prototype
@@ -133,6 +169,24 @@ export default function MembersPage() {
         </div>
       </div>
 
+      {currentUserData && (currentUserData.role === "Admin" || currentUserData.isPermitted) && (
+        <div className="card" style={{ marginBottom: "2rem", padding: "1.5rem" }}>
+          <h2 className="heading-2" style={{ margin: "0 0 1rem 0", fontSize: "1.25rem" }}>Post Daily News Update</h2>
+          <form onSubmit={addNews} style={{ display: "flex", gap: "1rem", alignItems: "flex-end" }}>
+            <div className="input-group" style={{ flex: 1, margin: 0 }}>
+              <textarea 
+                placeholder="Write your news update here..." 
+                value={newsText} 
+                onChange={e => setNewsText(e.target.value)} 
+                required 
+                style={{ width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-primary)", resize: "vertical", minHeight: "60px" }}
+              />
+            </div>
+            <button type="submit" className="btn" style={{ height: "42px" }}>Post Update</button>
+          </form>
+        </div>
+      )}
+
       <div className="card" style={{ padding: "0" }}>
         <div className="table-responsive">
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -152,7 +206,11 @@ export default function MembersPage() {
               ).map(member => (
                 <tr key={member.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
                   <td style={{ padding: "1rem 1.5rem" }}>{member.id}</td>
-                  <td style={{ padding: "1rem 1.5rem", fontWeight: 500 }}>{member.name}</td>
+                  <td style={{ padding: "1rem 1.5rem", fontWeight: 500 }}>
+                    <Link href={`/user/${member.uid}`} style={{ color: "var(--primary-color)", textDecoration: "none" }}>
+                      {member.name}
+                    </Link>
+                  </td>
                   <td style={{ padding: "1rem 1.5rem", color: "var(--text-secondary)" }}>{member.role}</td>
                   <td style={{ padding: "1rem 1.5rem" }}>
                     <button className="btn btn-secondary" style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }} onClick={() => downloadIDCard(member)}>
