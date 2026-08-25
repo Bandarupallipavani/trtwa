@@ -125,13 +125,23 @@ export default function UserProfilePage() {
             ) : (
               news.map(item => (
                 <div key={item.id} style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "1rem" }}>
-                  <p style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>{item.text}</p>
+                  <p style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)", whiteSpace: "pre-wrap" }}>{item.text}</p>
                   {item.attachmentUrl && (
-                    <a href={item.attachmentUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", color: "var(--primary-color)", fontWeight: "bold", marginBottom: "0.5rem", textDecoration: "none" }}>
-                      📄 View PDF Attachment
-                    </a>
+                    <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+                      <iframe 
+                        src={`${item.attachmentUrl}#view=FitH`} 
+                        width="100%" 
+                        height="300px" 
+                        style={{ border: "1px solid var(--border-color)", borderRadius: "8px" }}
+                        title="PDF Attachment"
+                      />
+                      <div style={{ marginTop: "0.5rem" }}>
+                        <a href={item.attachmentUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", color: "var(--primary-color)", fontWeight: "bold", textDecoration: "none", fontSize: "0.875rem" }}>
+                          ↗ Open PDF in New Tab
+                        </a>
+                      </div>
+                    </div>
                   )}
-                  <br />
                   <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{new Date(item.createdAt).toLocaleString()}</span>
                 </div>
               ))

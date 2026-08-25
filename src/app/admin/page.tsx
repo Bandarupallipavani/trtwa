@@ -337,13 +337,23 @@ export default function AdminDashboardPage() {
               news.map(item => (
                 <div key={item.id} style={{ border: "1px solid var(--border-color)", borderRadius: "8px", padding: "1rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
                   <div>
-                    <p style={{ margin: "0 0 0.5rem 0" }}>{item.text}</p>
+                    <p style={{ margin: "0 0 0.5rem 0", whiteSpace: "pre-wrap" }}>{item.text}</p>
                     {item.attachmentUrl && (
-                      <a href={item.attachmentUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", color: "var(--primary-color)", fontWeight: "bold", marginBottom: "0.5rem", textDecoration: "none" }}>
-                        📄 View PDF Attachment
-                      </a>
+                      <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+                        <iframe 
+                          src={`${item.attachmentUrl}#view=FitH`} 
+                          width="100%" 
+                          height="400px" 
+                          style={{ border: "1px solid var(--border-color)", borderRadius: "8px" }}
+                          title="PDF Attachment"
+                        />
+                        <div style={{ marginTop: "0.5rem" }}>
+                          <a href={item.attachmentUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", color: "var(--primary-color)", fontWeight: "bold", textDecoration: "none", fontSize: "0.875rem" }}>
+                            ↗ Open PDF in New Tab
+                          </a>
+                        </div>
+                      </div>
                     )}
-                    <br />
                     <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{new Date(item.createdAt).toLocaleString()}</span>
                   </div>
                   <button onClick={() => deleteNews(item.id)} className="btn btn-secondary" style={{ padding: "0.25rem 0.75rem", fontSize: "0.75rem", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.2)" }}>Delete</button>
