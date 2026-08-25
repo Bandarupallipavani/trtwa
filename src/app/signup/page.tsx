@@ -13,7 +13,7 @@ export default function SignUpPage() {
     email: "",
     password: "",
     phone: "",
-    role: "Junior Technician",
+    role: "Junior Member",
     bloodGroup: "O+",
     address: ""
   });
@@ -78,10 +78,10 @@ export default function SignUpPage() {
         await setDoc(doc(db, "members", user.uid), {
           id: trtId,
           uid: user.uid,
-          name: user.displayName || "New Technician",
+          name: user.displayName || "New Member",
           email: user.email || "",
           phone: "",
-          role: "Junior Technician",
+          role: "Junior Member",
           bloodGroup: "O+",
           address: "",
           isPermitted: false,
@@ -89,7 +89,7 @@ export default function SignUpPage() {
         });
       }
 
-      localStorage.setItem("trtwa_current_user", user.displayName || "Technician");
+      localStorage.setItem("trtwa_current_user", user.displayName || "Member");
       router.push(`/user/${user.uid}`);
     } catch (err: any) {
       console.error(err);
@@ -130,8 +130,8 @@ export default function SignUpPage() {
             <div className="input-group">
               <label>Role</label>
               <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                <option>Junior Technician</option>
-                <option>Senior Technician</option>
+                <option>Junior Member</option>
+                <option>Senior Member</option>
               </select>
             </div>
             <div className="input-group">

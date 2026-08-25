@@ -56,13 +56,13 @@ export default function Navbar() {
         TRTWA Union
       </Link>
       <div className="nav-links">
-        <button onClick={handleShare} className="btn btn-secondary" style={{ padding: "0.5rem 1rem", background: "transparent", border: "1px solid var(--border-color)" }}>Share App</button>
+        {isAdmin && <button onClick={handleShare} className="btn btn-secondary" style={{ padding: "0.5rem 1rem", background: "transparent", border: "1px solid var(--border-color)" }}>Share App</button>}
         {currentUser ? (
           <>
             <Link href={isAdmin ? "/admin" : `/user/${currentUser.uid}`}>Profile</Link>
             <Link href="/union">Union Chat</Link>
-            <Link href="/members">Members</Link>
-            <Link href="/rules">Rules & Bylaws</Link>
+            {isAdmin && <Link href="/members">Members</Link>}
+            {isAdmin && <Link href="/rules">Rules & Bylaws</Link>}
             {isAdmin && <Link href="/support">Tickets</Link>}
             <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: "0.5rem 1rem" }}>Logout</button>
           </>

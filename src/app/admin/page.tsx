@@ -8,6 +8,7 @@ export default function AdminDashboardPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [ads, setAds] = useState<any[]>([]);
+  const [ratings, setRatings] = useState<any[]>([]);
   const [newAd, setNewAd] = useState({ type: "image", url: "" });
 
   useEffect(() => {
@@ -31,9 +32,17 @@ export default function AdminDashboardPage() {
       setMembers(membersData);
     });
 
+    // Listen to Ratings
+    const unsubscribeRatings = onSnapshot(collection(db, "ratings"), (snapshot) => {
+      const ratingsData = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as any));
+      ratingsData.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      setRatings(ratingsData);
+    });
+
     return () => {
       unsubscribeAds();
       unsubscribeMembers();
+      unsubscribeRatings();
     };
   }, []);
 
@@ -44,6 +53,12 @@ export default function AdminDashboardPage() {
     const member = members.find(m => m.id === id);
     if (member) {
       await updateDoc(doc(db, "members", member.uid), { isPermitted: !member.isPermitted });
+    }
+  };
+
+  const deleteMember = async (uid: string) => {
+    if (confirm("Are you sure you want to completely remove this member?")) {
+      await deleteDoc(doc(db, "members", uid));
     }
   };
 
@@ -58,21 +73,19 @@ export default function AdminDashboardPage() {
     const headers = ["ID", "Name", "Role", "Phone", "DOB", "Address", "Union Access"];
     const rows = members.map(m => [
       m.id,
-      `"${m.name}"`,
+      `"${(m.name || "").replace(/"/g, '""')}"`,
       m.role,
       m.phone,
       m.dob,
-      `"${m.address || ""}"`,
+      `"${(m.address || "").replace(/"/g, '""')}"`,
       m.isPermitted ? "Permitted" : "Pending"
     ]);
     
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\\n" 
-      + rows.map(e => e.join(",")).join("\\n");
-      
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", "trtwa_members.csv");
     document.body.appendChild(link);
     link.click();
@@ -112,7 +125,12 @@ export default function AdminDashboardPage() {
       <div className="card" style={{ padding: 0, position: "relative" }}>
         <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
           <div>
-            <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>User Management & Permissions</h2>
+            <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+              User Management & Permissions
+              <span style={{ fontSize: "0.875rem", background: "var(--primary-color)", color: "white", padding: "0.25rem 0.75rem", borderRadius: "999px", fontWeight: "normal" }}>
+                Total Members: {members.length}
+              </span>
+            </h2>
             <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Toggle 'Permitted' to allow users to appear in the Union directory and chat. Use Edit to modify roles.</p>
           </div>
           <div style={{ minWidth: "300px" }}>
@@ -170,6 +188,13 @@ export default function AdminDashboardPage() {
                     onClick={() => sendWhatsApp(member)}
                   >
                     WhatsApp
+                  </button>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ padding: "0.5rem 1rem", fontSize: "0.875rem", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.2)" }}
+                    onClick={() => deleteMember(member.uid)}
+                  >
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -231,6 +256,38 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      <div className="card" style={{ padding: 0, marginTop: "2rem" }}>
+        <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+          <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Customer Ratings & Feedback</h2>
+          <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Reviews submitted by customers on the public support portal.</p>
+        </div>
+        <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {ratings.length === 0 ? (
+            <div style={{ color: "var(--text-secondary)", textAlign: "center", padding: "2rem" }}>No customer ratings yet.</div>
+          ) : (
+            ratings.map(rating => (
+              <div key={rating.id} style={{ border: "1px solid var(--border-color)", borderRadius: "8px", padding: "1rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                  <strong>{rating.name}</strong>
+                  <span style={{ color: "var(--accent-color)" }}>
+                    {Array(rating.rating).fill("⭐").join("")}
+                  </span>
+                </div>
+                <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
+                  Phone: {rating.phone} {rating.technicianName && `| Serviced by: ${rating.technicianName}`}
+                </div>
+                {rating.comments && (
+                  <p style={{ margin: 0, fontSize: "0.875rem", fontStyle: "italic" }}>"{rating.comments}"</p>
+                )}
+                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "0.5rem" }}>
+                  {new Date(rating.createdAt).toLocaleString()}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       {editingMember && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
           <div className="card" style={{ width: "400px", padding: "2rem" }}>
@@ -243,8 +300,8 @@ export default function AdminDashboardPage() {
               <div className="input-group">
                 <label>Role</label>
                 <select value={editingMember.role} onChange={e => setEditingMember({...editingMember, role: e.target.value})}>
-                  <option>Junior Technician</option>
-                  <option>Senior Technician</option>
+                  <option>Junior Member</option>
+                  <option>Senior Member</option>
                   <option>Supervisor</option>
                   <option>Union Admin</option>
                 </select>

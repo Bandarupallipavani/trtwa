@@ -7,7 +7,7 @@ import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 
 export default function AddMemberPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ name: "", phone: "", dob: "", role: "Junior Technician", address: "", bloodGroup: "O+", photo: "" });
+  const [formData, setFormData] = useState({ name: "", phone: "", dob: "", role: "Junior Member", address: "", bloodGroup: "O+", photo: "" });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -38,7 +38,7 @@ export default function AddMemberPage() {
         <Link href="/members" style={{ color: "var(--text-secondary)", textDecoration: "none", marginBottom: "1rem", display: "inline-block" }}>
           &larr; Back to Members
         </Link>
-        <h1 className="heading-1" style={{ margin: 0 }}>Add New Technician</h1>
+        <h1 className="heading-1" style={{ margin: 0 }}>Add New Member</h1>
       </div>
 
       <div className="card">
@@ -75,8 +75,8 @@ export default function AddMemberPage() {
           <div className="input-group">
             <label>Role</label>
             <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-              <option>Junior Technician</option>
-              <option>Senior Technician</option>
+              <option>Junior Member</option>
+              <option>Senior Member</option>
               <option>Supervisor</option>
               <option>Union Admin</option>
             </select>

@@ -7,12 +7,12 @@ export default function Home() {
         Telangana RO Technicians Welfare Association
       </h1>
       <p className="text-body" style={{ maxWidth: "800px", margin: "0 auto 3rem auto", fontSize: "1.25rem" }}>
-        Welcome to the official portal for TRTWA. Empowering RO technicians with secure ID cards, community support, birthday wishes, and robust customer service management.
+        Welcome to the official portal for TRTWA. Empowering RO members with secure ID cards, community support, birthday wishes, and robust customer service management.
       </p>
 
       <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginBottom: "4rem" }}>
         <Link href="/login" className="btn">
-          Technician Login
+          Member Login
         </Link>
         <Link href="/support/public" className="btn btn-secondary">
           Customer Portal
@@ -23,7 +23,7 @@ export default function Home() {
         <div className="card">
           <h2 className="heading-2">Union Membership</h2>
           <p className="text-body" style={{ marginBottom: "1.5rem" }}>
-            Register new RO technicians, generate official ID cards, and manage union membership securely.
+            Register new RO members, generate official ID cards, and manage union membership securely.
           </p>
           <Link href="/members" className="btn btn-secondary">Manage Members</Link>
         </div>

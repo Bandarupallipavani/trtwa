@@ -97,7 +97,7 @@ export default function LoginPage() {
     <div style={{ maxWidth: "1100px", margin: "4rem auto", padding: "0 1rem", display: "flex", flexWrap: "wrap", gap: "3rem", alignItems: "center", justifyContent: "center" }}>
       {ads.length > 0 && (
         <div style={{ flex: "1 1 450px", maxWidth: "550px", overflow: "hidden", borderRadius: "12px", background: "rgba(255,255,255,0.05)", padding: "1.5rem" }}>
-          <h2 className="heading-2" style={{ textAlign: "center", fontSize: "1.25rem", marginBottom: "1.5rem" }}>Technician Highlights</h2>
+          <h2 className="heading-2" style={{ textAlign: "center", fontSize: "1.25rem", marginBottom: "1.5rem" }}>Union Highlights</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", maxHeight: "500px", overflowY: "auto", paddingRight: "0.5rem" }}>
             {ads.map(ad => (
               <div key={ad.id} style={{ width: "100%", minHeight: "250px", borderRadius: "8px", overflow: "hidden", background: "#000" }}>
@@ -115,7 +115,7 @@ export default function LoginPage() {
       <div style={{ flex: "1 1 350px", maxWidth: "400px" }}>
         <div className="card">
           <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-            <h1 className="heading-2">Technician Login</h1>
+            <h1 className="heading-2">Member Login</h1>
             <p className="text-body" style={{ fontSize: "0.875rem" }}>Sign in to your official TRTWA union account</p>
           </div>
           {error && <div style={{ background: "var(--error-color)", color: "white", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem" }}>{error}</div>}
