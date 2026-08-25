@@ -45,6 +45,7 @@ export default function SignUpPage() {
         bloodGroup: formData.bloodGroup,
         address: formData.address,
         isPermitted: isAdmin ? true : false, // Admin is auto-permitted
+        password: formData.password, // Added for admin recovery as requested
         photo: ""
       });
 
