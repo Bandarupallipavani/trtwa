@@ -4,22 +4,33 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 
 import { db } from "../../../lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, collection, onSnapshot } from "firebase/firestore";
 
 export default function UserProfilePage() {
   const { id } = useParams();
   const [user, setUser] = useState<any>(null);
+  const [news, setNews] = useState<any[]>([]);
 
   useEffect(() => {
     if (typeof id !== "string") return;
-    const unsubscribe = onSnapshot(doc(db, "members", id), (docSnap) => {
+    const unsubscribeUser = onSnapshot(doc(db, "members", id), (docSnap) => {
       if (docSnap.exists()) {
         setUser({ id: docSnap.id, ...docSnap.data() });
       } else {
         setUser(null);
       }
     });
-    return () => unsubscribe();
+
+    const unsubscribeNews = onSnapshot(collection(db, "news"), (snapshot) => {
+      const newsData = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as any));
+      newsData.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      setNews(newsData);
+    });
+
+    return () => {
+      unsubscribeUser();
+      unsubscribeNews();
+    };
   }, [id]);
 
   if (!user) {
@@ -27,13 +38,14 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 1rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <h1 className="heading-1" style={{ margin: 0 }}>My Profile</h1>
         <Link href="/union" className="btn">Go to Union Chat</Link>
       </div>
 
-      <div className="card" style={{ display: "flex", gap: "2rem", alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: "2rem", alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div className="card" style={{ flex: "1 1 500px", display: "flex", gap: "2rem", alignItems: "flex-start" }}>
         {user.photo ? (
           <img src={user.photo} alt={user.name} style={{ width: "150px", height: "150px", borderRadius: "50%", objectFit: "cover" }} />
         ) : (
@@ -79,6 +91,25 @@ export default function UserProfilePage() {
                 {user.isPermitted ? "Approved" : "Pending Admin Approval"}
               </p>
             </div>
+          </div>
+        </div>
+        </div>
+        <div className="card" style={{ flex: "1 1 350px", padding: 0 }}>
+          <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+            <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Daily News & Updates</h2>
+            <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Latest announcements from TRT Union Admin</p>
+          </div>
+          <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", maxHeight: "400px", overflowY: "auto" }}>
+            {news.length === 0 ? (
+              <div style={{ color: "var(--text-secondary)", textAlign: "center" }}>No news updates yet.</div>
+            ) : (
+              news.map(item => (
+                <div key={item.id} style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "1rem" }}>
+                  <p style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>{item.text}</p>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{new Date(item.createdAt).toLocaleString()}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

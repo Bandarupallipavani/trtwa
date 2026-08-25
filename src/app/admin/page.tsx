@@ -9,7 +9,9 @@ export default function AdminDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [ads, setAds] = useState<any[]>([]);
   const [ratings, setRatings] = useState<any[]>([]);
+  const [news, setNews] = useState<any[]>([]);
   const [newAd, setNewAd] = useState({ type: "image", url: "" });
+  const [newsText, setNewsText] = useState("");
 
   useEffect(() => {
     // Listen to Ads
@@ -39,12 +41,43 @@ export default function AdminDashboardPage() {
       setRatings(ratingsData);
     });
 
+    // Listen to News
+    const unsubscribeNews = onSnapshot(collection(db, "news"), (snapshot) => {
+      const newsData = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as any));
+      newsData.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      setNews(newsData);
+    });
+
     return () => {
       unsubscribeAds();
       unsubscribeMembers();
       unsubscribeRatings();
+      unsubscribeNews();
     };
   }, []);
+
+  const addNews = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsText.trim()) return;
+    try {
+      const newId = Date.now().toString();
+      await setDoc(doc(db, "news", newId), {
+        text: newsText,
+        createdAt: new Date().toISOString()
+      });
+      setNewsText("");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteNews = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "news", id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const [editingMember, setEditingMember] = useState<any>(null);
 
@@ -214,6 +247,46 @@ export default function AdminDashboardPage() {
           </div>
         )}
       </div>
+
+      <div className="card" style={{ padding: 0, marginTop: "2rem" }}>
+        <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+          <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Daily News & Updates</h2>
+          <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Post updates to be displayed on every member's dashboard.</p>
+        </div>
+        
+        <div style={{ padding: "1.5rem" }}>
+          <form onSubmit={addNews} style={{ display: "flex", gap: "1rem", marginBottom: "2rem", alignItems: "flex-end" }}>
+            <div className="input-group" style={{ flex: 1, margin: 0 }}>
+              <label>Update Content</label>
+              <textarea 
+                placeholder="Write your news update here..." 
+                value={newsText} 
+                onChange={e => setNewsText(e.target.value)} 
+                required 
+                style={{ width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border-color)", background: "transparent", color: "var(--text-primary)", resize: "vertical", minHeight: "80px" }}
+              />
+            </div>
+            <button type="submit" className="btn" style={{ height: "42px" }}>Post Update</button>
+          </form>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {news.length === 0 ? (
+              <div style={{ color: "var(--text-secondary)", textAlign: "center" }}>No news updates posted yet.</div>
+            ) : (
+              news.map(item => (
+                <div key={item.id} style={{ border: "1px solid var(--border-color)", borderRadius: "8px", padding: "1rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+                  <div>
+                    <p style={{ margin: "0 0 0.5rem 0" }}>{item.text}</p>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{new Date(item.createdAt).toLocaleString()}</span>
+                  </div>
+                  <button onClick={() => deleteNews(item.id)} className="btn btn-secondary" style={{ padding: "0.25rem 0.75rem", fontSize: "0.75rem", color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.2)" }}>Delete</button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
 
       <div className="card" style={{ padding: 0, marginTop: "2rem" }}>
         <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
