@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { auth, db } from "../../lib/firebase";
 import { collection, doc, getDoc, getDocs, query, where, onSnapshot } from "firebase/firestore";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from "firebase/auth";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -30,7 +30,15 @@ export default function LoginPage() {
       }
       
       if (username === "admin2@gmail.com") {
-        await signInWithEmailAndPassword(auth, username, password);
+        try {
+          await signInWithEmailAndPassword(auth, username, password);
+        } catch (admin2Err: any) {
+          if (admin2Err.code === "auth/user-not-found" || admin2Err.code === "auth/invalid-credential") {
+             await createUserWithEmailAndPassword(auth, username, password);
+          } else {
+             throw admin2Err;
+          }
+        }
         localStorage.setItem("trtwa_current_user", "Support Admin");
         router.push("/admin2");
         return;
