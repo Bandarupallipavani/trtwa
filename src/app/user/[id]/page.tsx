@@ -3,8 +3,9 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
-import { db } from "../../../lib/firebase";
+import { db, storage } from "../../../lib/firebase";
 import { doc, collection, onSnapshot, updateDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function UserProfilePage() {
   const { id } = useParams();
@@ -13,6 +14,11 @@ export default function UserProfilePage() {
   const [elections, setElections] = useState<any[]>([]);
   const [activeMeeting, setActiveMeeting] = useState<any>(null);
   const newsContainerRef = React.useRef<HTMLDivElement>(null);
+  
+  const [showIdentityForm, setShowIdentityForm] = useState(false);
+  const [aadhaarInput, setAadhaarInput] = useState("");
+  const [idPhotoFile, setIdPhotoFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const container = newsContainerRef.current;
@@ -92,6 +98,33 @@ export default function UserProfilePage() {
     }
   };
 
+  const updateIdentity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (typeof id !== "string") return;
+    setUploading(true);
+    try {
+      let photoUrl = user.idPhotoUrl || "";
+      if (idPhotoFile) {
+        const fileRef = ref(storage, `id_photos/${id}_${Date.now()}`);
+        await uploadBytes(fileRef, idPhotoFile);
+        photoUrl = await getDownloadURL(fileRef);
+      }
+      
+      await updateDoc(doc(db, "members", id), {
+        aadhaar: aadhaarInput || user.aadhaar || "",
+        idPhotoUrl: photoUrl
+      });
+      setShowIdentityForm(false);
+      setIdPhotoFile(null);
+      alert("Identity Details Updated Successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Error updating identity details.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (!user) {
     return <div style={{ textAlign: "center", marginTop: "4rem" }}>User not found.</div>;
   }
@@ -165,6 +198,51 @@ export default function UserProfilePage() {
                 {user.isPermitted ? "Approved" : "Pending Admin Approval"}
               </p>
             </div>
+            <div>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", margin: 0 }}>Email ID</p>
+              <p style={{ fontWeight: 600, fontSize: "1.125rem", margin: "0.25rem 0 0 0", wordBreak: "break-all" }}>{user.email || "N/A"}</p>
+            </div>
+            <div>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", margin: 0 }}>Aadhaar Number</p>
+              <p style={{ fontWeight: 600, fontSize: "1.125rem", margin: "0.25rem 0 0 0" }}>{user.aadhaar || "Not Provided"}</p>
+            </div>
+          </div>
+          
+          <div style={{ marginTop: "2rem", paddingTop: "2rem", borderTop: "1px solid var(--border-color)", width: "100%" }}>
+            <h3 className="heading-2" style={{ fontSize: "1.125rem", marginBottom: "1rem" }}>Identity Verification</h3>
+            
+            {user.idPhotoUrl ? (
+              <div style={{ marginBottom: "1rem" }}>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: "0.5rem" }}>Uploaded ID Card:</p>
+                <img src={user.idPhotoUrl} alt="ID Card" style={{ maxWidth: "100%", maxHeight: "200px", borderRadius: "8px", objectFit: "contain", border: "1px solid var(--border-color)" }} />
+              </div>
+            ) : (
+              <div style={{ padding: "1rem", background: "rgba(245, 158, 11, 0.1)", color: "#d97706", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem" }}>
+                ⚠️ Please upload your ID Card photo for verification.
+              </div>
+            )}
+
+            {!showIdentityForm ? (
+              <button onClick={() => { setShowIdentityForm(true); setAadhaarInput(user.aadhaar || ""); }} className="btn btn-secondary">Update Identity Details</button>
+            ) : (
+              <form onSubmit={updateIdentity} style={{ display: "flex", flexDirection: "column", gap: "1rem", background: "var(--bg-color)", padding: "1.5rem", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
+                <div className="input-group" style={{ margin: 0 }}>
+                  <label>Aadhaar Number</label>
+                  <input type="text" value={aadhaarInput} onChange={e => setAadhaarInput(e.target.value)} placeholder="Enter Aadhaar Number" />
+                </div>
+                <div className="input-group" style={{ margin: 0 }}>
+                  <label>Upload ID Card Photo</label>
+                  <input type="file" accept="image/*" capture="environment" onChange={e => setIdPhotoFile(e.target.files?.[0] || null)} />
+                  <small style={{ color: "var(--text-secondary)" }}>Take a photo using your camera or select from gallery.</small>
+                </div>
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  <button type="submit" className="btn" disabled={uploading}>
+                    {uploading ? "Saving..." : "Save Details"}
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowIdentityForm(false)}>Cancel</button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
         </div>

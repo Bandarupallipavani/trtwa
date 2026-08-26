@@ -1,8 +1,24 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { db } from "../lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 export default function WhatsAppButton() {
   const [open, setOpen] = useState(false);
+  const [settings, setSettings] = useState({ whatsapp1: "7799116692", whatsapp2: "9908894681" });
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "general"), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSettings({
+          whatsapp1: data.whatsapp1 || "7799116692",
+          whatsapp2: data.whatsapp2 || "9908894681"
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div style={{ position: "fixed", bottom: "2rem", right: "2rem", zIndex: 9999 }}>
@@ -23,22 +39,22 @@ export default function WhatsAppButton() {
         }}>
           <h4 style={{ margin: 0, fontSize: "1rem", color: "var(--text-primary)" }}>Contact TRT Union</h4>
           <a
-            href="https://wa.me/917799116692?text=Hello%20TRTWA%20Union,"
+            href={`https://wa.me/91${settings.whatsapp1}?text=Hello%20TRTWA%20Union,`}
             target="_blank"
             rel="noopener noreferrer"
             className="btn"
             style={{ display: "block", textAlign: "center", background: "#25D366", borderColor: "#25D366", color: "white" }}
           >
-            Chat with 7799116692
+            Chat with {settings.whatsapp1}
           </a>
           <a
-            href="https://wa.me/919908894681?text=Hello%20TRTWA%20Union,"
+            href={`https://wa.me/91${settings.whatsapp2}?text=Hello%20TRTWA%20Union,`}
             target="_blank"
             rel="noopener noreferrer"
             className="btn"
             style={{ display: "block", textAlign: "center", background: "#25D366", borderColor: "#25D366", color: "white" }}
           >
-            Chat with 9908894681
+            Chat with {settings.whatsapp2}
           </a>
         </div>
       )}

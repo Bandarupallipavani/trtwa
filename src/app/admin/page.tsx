@@ -18,6 +18,9 @@ export default function AdminDashboardPage() {
   const [newsFile, setNewsFile] = useState<File | null>(null);
   const [newElectionTitle, setNewElectionTitle] = useState("");
   const [newElectionOptions, setNewElectionOptions] = useState("Candidate A, Candidate B");
+  const [settings, setSettings] = useState<any>({ whatsapp1: "7799116692", whatsapp2: "9908894681" });
+  const [whatsapp1Input, setWhatsapp1Input] = useState("");
+  const [whatsapp2Input, setWhatsapp2Input] = useState("");
 
   useEffect(() => {
     // Listen to Ads
@@ -68,6 +71,19 @@ export default function AdminDashboardPage() {
       setActiveMeeting(active || null);
     });
 
+    // Listen to Settings
+    const unsubscribeSettings = onSnapshot(doc(db, "settings", "general"), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSettings(data);
+        setWhatsapp1Input(data.whatsapp1 || "7799116692");
+        setWhatsapp2Input(data.whatsapp2 || "9908894681");
+      } else {
+        setWhatsapp1Input("7799116692");
+        setWhatsapp2Input("9908894681");
+      }
+    });
+
     return () => {
       unsubscribeAds();
       unsubscribeMembers();
@@ -75,8 +91,22 @@ export default function AdminDashboardPage() {
       unsubscribeNews();
       unsubscribeElections();
       unsubscribeMeetings();
+      unsubscribeSettings();
     };
   }, []);
+
+  const saveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await setDoc(doc(db, "settings", "general"), {
+        whatsapp1: whatsapp1Input,
+        whatsapp2: whatsapp2Input
+      }, { merge: true });
+      alert("Settings updated successfully!");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const startMeeting = async () => {
     try {
@@ -358,6 +388,22 @@ export default function AdminDashboardPage() {
               ) : (
                 <button onClick={startMeeting} className="btn" style={{ padding: "0.75rem 1.5rem", fontSize: "1rem" }}>▶ Start Live Meeting</button>
               )}
+            </div>
+
+            <div className="card" style={{ marginBottom: "2rem", padding: "1.5rem" }}>
+              <h2 className="heading-2" style={{ margin: "0 0 1rem 0", fontSize: "1.25rem" }}>Union Settings (WhatsApp)</h2>
+              <p className="text-body" style={{ margin: "0 0 1rem 0", fontSize: "0.875rem" }}>Update the contact numbers for the floating WhatsApp button.</p>
+              <form onSubmit={saveSettings} style={{ display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap" }}>
+                <div className="input-group" style={{ margin: 0, flex: "1 1 200px" }}>
+                  <label>WhatsApp Number 1</label>
+                  <input type="text" value={whatsapp1Input} onChange={e => setWhatsapp1Input(e.target.value)} required />
+                </div>
+                <div className="input-group" style={{ margin: 0, flex: "1 1 200px" }}>
+                  <label>WhatsApp Number 2</label>
+                  <input type="text" value={whatsapp2Input} onChange={e => setWhatsapp2Input(e.target.value)} required />
+                </div>
+                <button type="submit" className="btn" style={{ height: "42px" }}>Save Settings</button>
+              </form>
             </div>
 
             <form onSubmit={addNews} style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "2rem" }}>
