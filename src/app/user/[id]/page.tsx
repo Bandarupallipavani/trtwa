@@ -11,6 +11,7 @@ export default function UserProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [news, setNews] = useState<any[]>([]);
   const [elections, setElections] = useState<any[]>([]);
+  const [activeMeeting, setActiveMeeting] = useState<any>(null);
   const newsContainerRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,10 +66,17 @@ export default function UserProfilePage() {
       setElections(electionsData);
     });
 
+    const unsubscribeMeetings = onSnapshot(collection(db, "meetings"), (snapshot) => {
+      const meetingsData = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as any));
+      const active = meetingsData.find(m => m.isActive);
+      setActiveMeeting(active || null);
+    });
+
     return () => {
       unsubscribeUser();
       unsubscribeNews();
       unsubscribeElections();
+      unsubscribeMeetings();
     };
   }, [id]);
 
@@ -90,6 +98,21 @@ export default function UserProfilePage() {
 
   return (
     <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 1rem" }}>
+      {activeMeeting && (
+        <div style={{ marginBottom: "2rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid #ef4444", borderRadius: "8px", padding: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h3 style={{ margin: "0 0 0.25rem 0", color: "#ef4444", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", background: "#ef4444", animation: "pulse 2s infinite" }}></span>
+              LIVE: Union Meeting in Progress
+            </h3>
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "0.875rem" }}>The Admin has started a live video broadcast.</p>
+          </div>
+          <a href={`https://meet.jit.si/${activeMeeting.id}`} target="_blank" rel="noopener noreferrer" className="btn" style={{ background: "#ef4444", color: "white" }}>
+            Click to Join
+          </a>
+        </div>
+      )}
+      
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <h1 className="heading-1" style={{ margin: 0 }}>My Profile</h1>
         <Link href="/union" className="btn">Go to Union Chat</Link>

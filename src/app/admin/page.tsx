@@ -12,6 +12,7 @@ export default function AdminDashboardPage() {
   const [ratings, setRatings] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
   const [elections, setElections] = useState<any[]>([]);
+  const [activeMeeting, setActiveMeeting] = useState<any>(null);
   const [newAd, setNewAd] = useState({ type: "image", url: "" });
   const [newsText, setNewsText] = useState("");
   const [newsFile, setNewsFile] = useState<File | null>(null);
@@ -60,14 +61,42 @@ export default function AdminDashboardPage() {
       setElections(electionsData);
     });
 
+    // Listen to Meetings
+    const unsubscribeMeetings = onSnapshot(collection(db, "meetings"), (snapshot) => {
+      const meetingsData = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as any));
+      const active = meetingsData.find(m => m.isActive);
+      setActiveMeeting(active || null);
+    });
+
     return () => {
       unsubscribeAds();
       unsubscribeMembers();
       unsubscribeRatings();
       unsubscribeNews();
       unsubscribeElections();
+      unsubscribeMeetings();
     };
   }, []);
+
+  const startMeeting = async () => {
+    try {
+      const newId = `trtwa-meeting-${Date.now()}`;
+      await setDoc(doc(db, "meetings", newId), {
+        isActive: true,
+        startedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const endMeeting = async (id: string) => {
+    try {
+      await updateDoc(doc(db, "meetings", id), { isActive: false });
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const addNews = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,14 +330,37 @@ export default function AdminDashboardPage() {
         )}
       </div>
 
-      <div className="card" style={{ padding: 0, marginTop: "2rem" }}>
-        <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
-          <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Daily News & Updates</h2>
-          <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Post updates to be displayed on every member's dashboard.</p>
-        </div>
-        
-        <div style={{ padding: "1.5rem" }}>
-          <form onSubmit={addNews} style={{ display: "flex", gap: "1rem", marginBottom: "2rem", alignItems: "flex-end" }}>
+        <div className="card" style={{ flex: "1 1 350px", padding: 0, marginTop: "2rem" }}>
+          <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+            <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Daily News & Updates</h2>
+            <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Post updates to be displayed on every member's dashboard.</p>
+          </div>
+          
+          <div style={{ padding: "1.5rem" }}>
+            <div className="card" style={{ marginBottom: "2rem", padding: "1.5rem", borderLeft: "4px solid #3b82f6" }}>
+              <h2 className="heading-2" style={{ margin: "0 0 1rem 0", fontSize: "1.25rem" }}>Live Video Meetings</h2>
+              <p className="text-body" style={{ margin: "0 0 1rem 0", fontSize: "0.875rem" }}>Start a live video broadcast for all union members.</p>
+              
+              {activeMeeting ? (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                    <span style={{ color: "var(--success-color)", fontWeight: "bold" }}>🔴 Meeting in Progress</span>
+                    <button onClick={() => endMeeting(activeMeeting.id)} className="btn btn-secondary" style={{ color: "#ef4444", borderColor: "rgba(239, 68, 68, 0.2)" }}>End Meeting</button>
+                  </div>
+                  <iframe 
+                    src={`https://meet.jit.si/${activeMeeting.id}`} 
+                    width="100%" 
+                    height="600px" 
+                    style={{ border: "1px solid var(--border-color)", borderRadius: "8px" }}
+                    allow="camera; microphone; fullscreen; display-capture"
+                  />
+                </div>
+              ) : (
+                <button onClick={startMeeting} className="btn" style={{ padding: "0.75rem 1.5rem", fontSize: "1rem" }}>▶ Start Live Meeting</button>
+              )}
+            </div>
+
+            <form onSubmit={addNews} style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "2rem" }}>
             <div className="input-group" style={{ flex: 1, margin: 0 }}>
               <label>Update Content</label>
               <textarea 
