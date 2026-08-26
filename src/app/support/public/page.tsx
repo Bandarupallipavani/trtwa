@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { db } from "../../../lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
+import Link from "next/link";
 
 export default function PublicSupportPage() {
   const [mode, setMode] = useState<"ticket" | "rating">("ticket");
@@ -57,7 +58,12 @@ export default function PublicSupportPage() {
 
   return (
     <div style={{ maxWidth: "600px", margin: "0 auto", padding: "0 1rem" }}>
-      <h1 className="heading-1">Customer Support Portal</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <h1 className="heading-1" style={{ margin: 0 }}>Customer Support Portal</h1>
+        <Link href="/login" className="btn btn-secondary" style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>
+          Admin Login
+        </Link>
+      </div>
       <p className="text-body" style={{ marginBottom: "2rem" }}>
         {mode === "ticket" ? "Need help with your RO system? Submit a service request." : "Rate your service experience with our members."}
       </p>
