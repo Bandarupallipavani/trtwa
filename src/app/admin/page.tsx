@@ -342,6 +342,7 @@ export default function AdminDashboardPage() {
               <th style={{ padding: "1rem 1.5rem" }}>ID</th>
               <th style={{ padding: "1rem 1.5rem" }}>Name</th>
               <th style={{ padding: "1rem 1.5rem" }}>Role</th>
+              <th style={{ padding: "1rem 1.5rem" }}>Email ID</th>
               <th style={{ padding: "1rem 1.5rem" }}>Mobile</th>
               <th style={{ padding: "1rem 1.5rem" }}>Address</th>
               <th style={{ padding: "1rem 1.5rem" }}>Password</th>
@@ -358,6 +359,7 @@ export default function AdminDashboardPage() {
                 <td style={{ padding: "1rem 1.5rem", fontWeight: 500 }}>{member.id}</td>
                 <td style={{ padding: "1rem 1.5rem" }}>{member.name}</td>
                 <td style={{ padding: "1rem 1.5rem", color: "var(--text-secondary)" }}>{member.role}</td>
+                <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem", wordBreak: "break-all" }}>{member.email || "N/A"}</td>
                 <td style={{ padding: "1rem 1.5rem" }}>{member.phone}</td>
                 <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem", maxWidth: "200px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={member.address}>{member.address || "N/A"}</td>
                 <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem", color: "var(--text-secondary)" }}>{member.password || "Hidden"}</td>

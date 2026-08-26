@@ -8,6 +8,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 export default function Navbar() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSupportAdmin, setIsSupportAdmin] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -16,8 +17,10 @@ export default function Navbar() {
       setCurrentUser(user);
       if (user) {
         setIsAdmin(user.email === "admin@trtwa.com");
+        setIsSupportAdmin(user.email === "admin2@gmail.com");
       } else {
         setIsAdmin(false);
+        setIsSupportAdmin(false);
         localStorage.removeItem("trtwa_current_user");
       }
     });
@@ -59,11 +62,11 @@ export default function Navbar() {
         {isAdmin && <button onClick={handleShare} className="btn btn-secondary" style={{ padding: "0.5rem 1rem", background: "transparent", border: "1px solid var(--border-color)" }}>Share App</button>}
         {currentUser ? (
           <>
-            <Link href={isAdmin ? "/admin" : `/user/${currentUser.uid}`}>Profile</Link>
-            <Link href="/union">Union Chat</Link>
+            <Link href={isAdmin ? "/admin" : (isSupportAdmin ? "/admin2" : `/user/${currentUser.uid}`)}>Profile</Link>
+            {!isSupportAdmin && <Link href="/union">Union Chat</Link>}
             {isAdmin && <Link href="/members">Members</Link>}
             {isAdmin && <Link href="/rules">Rules & Bylaws</Link>}
-            {isAdmin && <Link href="/support">Tickets</Link>}
+            {isSupportAdmin && <Link href="/admin2">Tickets</Link>}
             <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: "0.5rem 1rem" }}>Logout</button>
           </>
         ) : (

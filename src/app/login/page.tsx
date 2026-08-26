@@ -27,6 +27,13 @@ export default function LoginPage() {
         router.push("/admin");
         return;
       }
+      
+      if (username === "admin2@gmail.com") {
+        await signInWithEmailAndPassword(auth, username, password);
+        localStorage.setItem("trtwa_current_user", "Support Admin");
+        router.push("/admin2");
+        return;
+      }
 
       let loginEmail = username;
       if (!username.includes("@")) {
