@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { auth, db } from "../../lib/firebase";
 import { collection, doc, getDoc, getDocs, query, where, onSnapshot } from "firebase/firestore";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from "firebase/auth";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -13,6 +13,7 @@ export default function LoginPage() {
 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -101,6 +102,21 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const emailPrompt = window.prompt("Enter your registered Email Address for password reset:");
+    if (!emailPrompt) return;
+    
+    try {
+      await sendPasswordResetEmail(auth, emailPrompt);
+      setResetMessage("Password reset email sent! Please check your inbox.");
+      setError("");
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to send reset email. Ensure the email address is correct.");
+      setResetMessage("");
+    }
+  };
+
   const [ads, setAds] = useState<any[]>([]);
   const [memberCount, setMemberCount] = useState(0);
 
@@ -151,6 +167,7 @@ export default function LoginPage() {
             <p className="text-body" style={{ fontSize: "0.875rem" }}>Sign in to your official TRT union account</p>
           </div>
           {error && <div style={{ background: "var(--error-color)", color: "white", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem" }}>{error}</div>}
+          {resetMessage && <div style={{ background: "var(--success-color)", color: "white", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem" }}>{resetMessage}</div>}
           <form onSubmit={handleLogin}>
             <div className="input-group">
               <label>Email Address or Aadhaar Number</label>
@@ -163,7 +180,10 @@ export default function LoginPage() {
             />
             </div>
             <div className="input-group">
-              <label>Password</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <label style={{ margin: 0 }}>Password</label>
+                <button type="button" onClick={handleForgotPassword} style={{ background: "transparent", border: "none", color: "var(--primary-color)", fontSize: "0.875rem", cursor: "pointer", padding: 0 }}>Forgot Password?</button>
+              </div>
               <input type="password" required placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
             </div>
             <button type="submit" className="btn" style={{ width: "100%", marginBottom: "1rem" }} disabled={loading}>
