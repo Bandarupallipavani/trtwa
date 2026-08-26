@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { db, storage } from "../../lib/firebase";
+import { auth, db, storage } from "../../lib/firebase";
 import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { updatePassword } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function AdminDashboardPage() {
@@ -24,6 +25,9 @@ export default function AdminDashboardPage() {
   const [whatsapp1Input, setWhatsapp1Input] = useState("");
   const [whatsapp2Input, setWhatsapp2Input] = useState("");
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordMsg, setPasswordMsg] = useState("");
 
   useEffect(() => {
     // Listen to Ads
@@ -226,7 +230,6 @@ export default function AdminDashboardPage() {
   const [adminTab, setAdminTab] = useState<"all" | "pending">("all");
 
   const togglePermission = async (id: string) => {
-    // Note: id here is the TRT ID, we need to find the member and use its uid
     const member = members.find(m => m.id === id);
     if (member) {
       await updateDoc(doc(db, "members", member.uid), { isPermitted: !member.isPermitted });
@@ -299,18 +302,32 @@ export default function AdminDashboardPage() {
 
   const sendWhatsApp = (member: any) => {
     const text = `Hello ${member.name}, this is an official message from TRT Union Admin.`;
-    // Using wa.me API. Phone number should ideally include country code, assuming India +91 if not present for prototype
     const phone = member.phone.length === 10 ? `91${member.phone}` : member.phone;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth.currentUser) return;
+    try {
+      await updatePassword(auth.currentUser, newPassword);
+      setPasswordMsg("Password updated successfully!");
+      setNewPassword("");
+      setTimeout(() => setShowPasswordModal(false), 2000);
+    } catch (err: any) {
+      console.error(err);
+      setPasswordMsg("Error updating password: " + err.message);
+    }
   };
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <h1 className="heading-1" style={{ margin: 0 }}>Admin Dashboard</h1>
-        <div>
-          <button onClick={exportToCSV} className="btn btn-secondary" style={{ marginRight: "1rem" }}>Export to Excel/CSV</button>
-          <Link href="/members/new" className="btn btn-secondary" style={{ marginRight: "1rem" }}>Add User</Link>
+        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <button onClick={() => setShowPasswordModal(true)} className="btn btn-secondary">Change My Password</button>
+          <button onClick={exportToCSV} className="btn btn-secondary">Export to Excel/CSV</button>
+          <Link href="/members/new" className="btn btn-secondary">Add User</Link>
           <Link href="/union" className="btn">View Union Page</Link>
         </div>
       </div>
@@ -580,7 +597,6 @@ export default function AdminDashboardPage() {
               <div style={{ color: "var(--text-secondary)", textAlign: "center" }}>No elections found.</div>
             ) : (
               elections.map(election => {
-                // Calculate votes for each option
                 const voteCounts: Record<string, number> = {};
                 election.options.forEach((opt: any) => {
                   const name = typeof opt === 'string' ? opt : opt.name;
@@ -764,6 +780,28 @@ export default function AdminDashboardPage() {
               <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
                 <button type="submit" className="btn" style={{ flex: 1 }}>Save Changes</button>
                 <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setEditingMember(null)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showPasswordModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
+          <div className="card" style={{ width: "100%", maxWidth: "400px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Change Password</h2>
+              <button onClick={() => setShowPasswordModal(false)} style={{ background: "transparent", border: "none", color: "var(--text-secondary)", cursor: "pointer" }}>✕</button>
+            </div>
+            {passwordMsg && <div style={{ background: passwordMsg.includes("Error") ? "var(--error-color)" : "var(--success-color)", color: "white", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem" }}>{passwordMsg}</div>}
+            <form onSubmit={handleChangePassword}>
+              <div className="input-group">
+                <label>New Password</label>
+                <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" minLength={6} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem" }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowPasswordModal(false)}>Cancel</button>
+                <button type="submit" className="btn">Update Password</button>
               </div>
             </form>
           </div>
