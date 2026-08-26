@@ -223,6 +223,7 @@ export default function AdminDashboardPage() {
   };
 
   const [editingMember, setEditingMember] = useState<any>(null);
+  const [adminTab, setAdminTab] = useState<"all" | "pending">("all");
 
   const togglePermission = async (id: string) => {
     // Note: id here is the TRT ID, we need to find the member and use its uid
@@ -315,15 +316,36 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="card" style={{ padding: 0, position: "relative" }}>
-        <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
+        <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
           <div>
             <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-              User Management & Permissions
+              User Management
               <span style={{ fontSize: "0.875rem", background: "var(--primary-color)", color: "white", padding: "0.25rem 0.75rem", borderRadius: "999px", fontWeight: "normal" }}>
                 Total Members: {members.length}
               </span>
             </h2>
-            <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Toggle 'Permitted' to allow users to appear in the Union directory and chat. Use Edit to modify roles.</p>
+            <p className="text-body" style={{ margin: "0.5rem 0 1rem 0", fontSize: "0.875rem" }}>Toggle 'Permitted' to allow users to appear in the Union directory and chat. Use Edit to modify roles.</p>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button 
+                className={adminTab === "all" ? "btn" : "btn btn-secondary"} 
+                onClick={() => setAdminTab("all")}
+                style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}
+              >
+                All Members
+              </button>
+              <button 
+                className={adminTab === "pending" ? "btn" : "btn btn-secondary"} 
+                onClick={() => setAdminTab("pending")}
+                style={{ padding: "0.5rem 1rem", fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                Pending Permissions
+                {members.filter(m => !m.isPermitted).length > 0 && (
+                  <span style={{ background: "var(--error-color)", color: "white", padding: "0.1rem 0.5rem", borderRadius: "999px", fontSize: "0.75rem" }}>
+                    {members.filter(m => !m.isPermitted).length}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
           <div style={{ minWidth: "300px" }}>
             <input 
@@ -350,7 +372,7 @@ export default function AdminDashboardPage() {
             </tr>
           </thead>
           <tbody>
-            {members.filter(m => 
+            {members.filter(m => adminTab === "pending" ? !m.isPermitted : true).filter(m => 
               (m.address || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
               (m.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
               (m.phone || "").toLowerCase().includes(searchQuery.toLowerCase())
@@ -359,10 +381,10 @@ export default function AdminDashboardPage() {
                 <td style={{ padding: "1rem 1.5rem", fontWeight: 500 }}>{member.id}</td>
                 <td style={{ padding: "1rem 1.5rem" }}>{member.name}</td>
                 <td style={{ padding: "1rem 1.5rem", color: "var(--text-secondary)" }}>{member.role}</td>
-                <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem", wordBreak: "break-all" }}>{member.email || "N/A"}</td>
-                <td style={{ padding: "1rem 1.5rem" }}>{member.phone}</td>
+                <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem", minWidth: "200px" }}>{member.email || "N/A"}</td>
+                <td style={{ padding: "1rem 1.5rem", whiteSpace: "nowrap" }}>{member.phone}</td>
                 <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem", maxWidth: "200px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={member.address}>{member.address || "N/A"}</td>
-                <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem", color: "var(--text-secondary)" }}>{member.password || "Hidden"}</td>
+                <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem" }}>{member.password || "Not Available"}</td>
                 <td style={{ padding: "1rem 1.5rem", display: "flex", gap: "0.5rem" }}>
                   <button 
                     className={member.isPermitted ? "btn" : "btn btn-secondary"} 
