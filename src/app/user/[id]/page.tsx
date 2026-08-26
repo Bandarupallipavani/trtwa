@@ -12,6 +12,7 @@ export default function UserProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [news, setNews] = useState<any[]>([]);
   const [elections, setElections] = useState<any[]>([]);
+  const [ads, setAds] = useState<any[]>([]);
   const [activeMeeting, setActiveMeeting] = useState<any>(null);
   const newsContainerRef = React.useRef<HTMLDivElement>(null);
   
@@ -78,11 +79,16 @@ export default function UserProfilePage() {
       setActiveMeeting(active || null);
     });
 
+    const unsubscribeAds = onSnapshot(collection(db, "ads"), (snapshot) => {
+      setAds(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as any)));
+    });
+
     return () => {
       unsubscribeUser();
       unsubscribeNews();
       unsubscribeElections();
       unsubscribeMeetings();
+      unsubscribeAds();
     };
   }, [id]);
 
@@ -150,6 +156,27 @@ export default function UserProfilePage() {
         <h1 className="heading-1" style={{ margin: 0 }}>My Profile</h1>
         <Link href="/union" className="btn">Go to Union Chat</Link>
       </div>
+
+      {ads.length > 0 && (
+        <div className="card" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
+          <h2 className="heading-2" style={{ margin: "0 0 1rem 0", fontSize: "1.25rem" }}>Dashboard Highlights</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "1.5rem" }}>
+            {ads.map(ad => (
+              <div key={ad.id} style={{ border: "1px solid var(--border-color)", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
+                {ad.type === "video" ? (
+                  <video src={ad.url} style={{ width: "100%", height: "200px", objectFit: "cover" }} controls />
+                ) : ad.type === "audio" ? (
+                  <div style={{ padding: "1rem", height: "200px", display: "flex", alignItems: "center", background: "var(--bg-color)" }}>
+                    <audio src={ad.url} style={{ width: "100%" }} controls />
+                  </div>
+                ) : (
+                  <img src={ad.url} alt="Highlight" style={{ width: "100%", height: "200px", objectFit: "cover" }} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: "2rem", alignItems: "flex-start", flexWrap: "wrap" }}>
         <div className="card" style={{ flex: "1 1 500px", display: "flex", gap: "2rem", alignItems: "flex-start" }}>
@@ -301,16 +328,21 @@ export default function UserProfilePage() {
                       </div>
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                        {election.options.map((opt: string) => (
+                        {election.options.map((opt: any) => {
+                          const name = typeof opt === 'string' ? opt : opt.name;
+                          const photoUrl = typeof opt === 'string' ? '' : opt.photoUrl;
+                          return (
                           <button 
-                            key={opt}
-                            onClick={() => castVote(election.id, opt)}
+                            key={name}
+                            onClick={() => castVote(election.id, name)}
                             className="btn btn-secondary" 
-                            style={{ width: "100%", textAlign: "left", padding: "0.75rem 1rem" }}
+                            style={{ width: "100%", textAlign: "left", padding: "0.75rem 1rem", display: "flex", gap: "1rem", alignItems: "center" }}
                           >
-                            {opt}
+                            {photoUrl && <img src={photoUrl} alt={name} style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />}
+                            {name}
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>

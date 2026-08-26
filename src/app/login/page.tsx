@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { auth, db } from "../../lib/firebase";
-import { collection, onSnapshot, doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where, onSnapshot } from "firebase/firestore";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import Link from "next/link";
 
@@ -28,7 +28,20 @@ export default function LoginPage() {
         return;
       }
 
-      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      let loginEmail = username;
+      if (!username.includes("@")) {
+        const q = query(collection(db, "members"), where("aadhaar", "==", username));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          loginEmail = querySnapshot.docs[0].data().email;
+        } else {
+          setError("Aadhaar number not found in database.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, password);
       const user = userCredential.user;
 
       const docSnap = await getDoc(doc(db, "members", user.uid));
@@ -85,14 +98,12 @@ export default function LoginPage() {
   const [memberCount, setMemberCount] = useState(0);
 
   React.useEffect(() => {
-    const unsubscribeAds = onSnapshot(collection(db, "ads"), (snapshot) => {
-      if (!snapshot.empty) {
-        const adsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        setAds(adsData);
-      }
+    const unsubscribeAds = onSnapshot(collection(db, "ads"), (snapshot: any) => {
+      const adsData = snapshot.docs.map((d: any) => ({ ...d.data(), id: d.id }));
+      setAds(adsData);
     });
     
-    const unsubscribeMembers = onSnapshot(collection(db, "members"), (snapshot) => {
+    const unsubscribeMembers = onSnapshot(collection(db, "members"), (snapshot: any) => {
       setMemberCount(snapshot.size);
     });
 
@@ -135,8 +146,14 @@ export default function LoginPage() {
           {error && <div style={{ background: "var(--error-color)", color: "white", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem" }}>{error}</div>}
           <form onSubmit={handleLogin}>
             <div className="input-group">
-              <label>Email Address</label>
-              <input type="email" required placeholder="name@example.com" value={username} onChange={e => setUsername(e.target.value)} />
+              <label>Email Address or Aadhaar Number</label>
+            <input 
+              type="text" 
+              required 
+              value={username} 
+              onChange={e => setUsername(e.target.value)} 
+              placeholder="ramesh@example.com or 123456789012" 
+            />
             </div>
             <div className="input-group">
               <label>Password</label>

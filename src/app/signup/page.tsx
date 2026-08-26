@@ -13,6 +13,7 @@ export default function SignUpPage() {
     email: "",
     password: "",
     phone: "",
+    aadhaar: "",
     role: "Junior Member",
     bloodGroup: "O+",
     address: ""
@@ -41,6 +42,7 @@ export default function SignUpPage() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        aadhaar: formData.aadhaar,
         role: isAdmin ? "Admin" : formData.role,
         bloodGroup: formData.bloodGroup,
         address: formData.address,
@@ -126,6 +128,10 @@ export default function SignUpPage() {
           <div className="input-group">
             <label>Phone Number</label>
             <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="e.g. 9876543210" />
+          </div>
+          <div className="input-group">
+            <label>Aadhaar Number</label>
+            <input type="text" required value={formData.aadhaar} onChange={e => setFormData({...formData, aadhaar: e.target.value})} placeholder="e.g. 123456789012" />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div className="input-group">

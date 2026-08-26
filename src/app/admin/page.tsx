@@ -14,13 +14,16 @@ export default function AdminDashboardPage() {
   const [elections, setElections] = useState<any[]>([]);
   const [activeMeeting, setActiveMeeting] = useState<any>(null);
   const [newAd, setNewAd] = useState({ type: "image", url: "" });
+  const [adFile, setAdFile] = useState<File | null>(null);
+  const [adUploading, setAdUploading] = useState(false);
   const [newsText, setNewsText] = useState("");
   const [newsFile, setNewsFile] = useState<File | null>(null);
   const [newElectionTitle, setNewElectionTitle] = useState("");
-  const [newElectionOptions, setNewElectionOptions] = useState("Candidate A, Candidate B");
-  const [settings, setSettings] = useState<any>({ whatsapp1: "7799116692", whatsapp2: "9908894681" });
+  const [candidates, setCandidates] = useState<{name: string, file: File | null}[]>([{name: "", file: null}, {name: "", file: null}]);
+  const [settings, setSettings] = useState<any>({ whatsapp1: "7799116692", whatsapp2: "9908894681", signatureUrl: "" });
   const [whatsapp1Input, setWhatsapp1Input] = useState("");
   const [whatsapp2Input, setWhatsapp2Input] = useState("");
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
 
   useEffect(() => {
     // Listen to Ads
@@ -98,10 +101,18 @@ export default function AdminDashboardPage() {
   const saveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let sigUrl = settings?.signatureUrl || "";
+      if (signatureFile) {
+        const sigRef = ref(storage, `settings/signature_${Date.now()}`);
+        await uploadBytes(sigRef, signatureFile);
+        sigUrl = await getDownloadURL(sigRef);
+      }
       await setDoc(doc(db, "settings", "general"), {
         whatsapp1: whatsapp1Input,
-        whatsapp2: whatsapp2Input
+        whatsapp2: whatsapp2Input,
+        signatureUrl: sigUrl
       }, { merge: true });
+      setSignatureFile(null);
       alert("Settings updated successfully!");
     } catch (err) {
       console.error(err);
@@ -156,9 +167,27 @@ export default function AdminDashboardPage() {
   const createElection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newElectionTitle.trim()) return;
+    setAdUploading(true);
     try {
-      const optionsArray = newElectionOptions.split(",").map(o => o.trim()).filter(o => o);
       const newId = Date.now().toString();
+      const optionsArray = [];
+      for (const cand of candidates) {
+        if (!cand.name.trim()) continue;
+        let photoUrl = "";
+        if (cand.file) {
+          const fileRef = ref(storage, `elections/${newId}_${cand.file.name}`);
+          await uploadBytes(fileRef, cand.file);
+          photoUrl = await getDownloadURL(fileRef);
+        }
+        optionsArray.push({ name: cand.name.trim(), photoUrl });
+      }
+
+      if (optionsArray.length < 2) {
+        alert("Please provide at least 2 candidates");
+        setAdUploading(false);
+        return;
+      }
+
       await setDoc(doc(db, "elections", newId), {
         title: newElectionTitle,
         options: optionsArray,
@@ -167,9 +196,11 @@ export default function AdminDashboardPage() {
         createdAt: new Date().toISOString()
       });
       setNewElectionTitle("");
-      setNewElectionOptions("Candidate A, Candidate B");
+      setCandidates([{name: "", file: null}, {name: "", file: null}]);
     } catch (err) {
       console.error(err);
+    } finally {
+      setAdUploading(false);
     }
   };
 
@@ -239,10 +270,26 @@ export default function AdminDashboardPage() {
 
   const addAd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAd.url) return;
+    if (!newAd.url && !adFile) return;
+    setAdUploading(true);
     const id = Date.now().toString();
-    await setDoc(doc(db, "ads", id), { ...newAd });
-    setNewAd({ type: "image", url: "" });
+    
+    let finalUrl = newAd.url;
+    try {
+      if (adFile) {
+        const fileRef = ref(storage, `ads/${id}_${adFile.name}`);
+        await uploadBytes(fileRef, adFile);
+        finalUrl = await getDownloadURL(fileRef);
+      }
+      
+      await setDoc(doc(db, "ads", id), { type: newAd.type, url: finalUrl });
+      setNewAd({ type: "image", url: "" });
+      setAdFile(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAdUploading(false);
+    }
   };
 
   const removeAd = async (id: string) => {
@@ -391,16 +438,21 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="card" style={{ marginBottom: "2rem", padding: "1.5rem" }}>
-              <h2 className="heading-2" style={{ margin: "0 0 1rem 0", fontSize: "1.25rem" }}>Union Settings (WhatsApp)</h2>
-              <p className="text-body" style={{ margin: "0 0 1rem 0", fontSize: "0.875rem" }}>Update the contact numbers for the floating WhatsApp button.</p>
+              <h2 className="heading-2" style={{ margin: "0 0 1rem 0", fontSize: "1.25rem" }}>Union Settings (WhatsApp & Signature)</h2>
+              <p className="text-body" style={{ margin: "0 0 1rem 0", fontSize: "0.875rem" }}>Update the contact numbers for the floating WhatsApp button and upload the Union Leader's signature for ID cards.</p>
               <form onSubmit={saveSettings} style={{ display: "flex", gap: "1rem", alignItems: "flex-end", flexWrap: "wrap" }}>
-                <div className="input-group" style={{ margin: 0, flex: "1 1 200px" }}>
+                <div className="input-group" style={{ margin: 0, flex: "1 1 150px" }}>
                   <label>WhatsApp Number 1</label>
                   <input type="text" value={whatsapp1Input} onChange={e => setWhatsapp1Input(e.target.value)} required />
                 </div>
-                <div className="input-group" style={{ margin: 0, flex: "1 1 200px" }}>
+                <div className="input-group" style={{ margin: 0, flex: "1 1 150px" }}>
                   <label>WhatsApp Number 2</label>
                   <input type="text" value={whatsapp2Input} onChange={e => setWhatsapp2Input(e.target.value)} required />
+                </div>
+                <div className="input-group" style={{ margin: 0, flex: "1 1 200px" }}>
+                  <label>Union Leader Signature (Image)</label>
+                  <input type="file" accept="image/*" onChange={e => setSignatureFile(e.target.files?.[0] || null)} />
+                  {settings?.signatureUrl && <div style={{marginTop:"0.5rem", fontSize:"0.8rem", color:"var(--success-color)"}}>✓ Signature Currently Uploaded</div>}
                 </div>
                 <button type="submit" className="btn" style={{ height: "42px" }}>Save Settings</button>
               </form>
@@ -469,16 +521,34 @@ export default function AdminDashboardPage() {
         </div>
         
         <div style={{ padding: "1.5rem" }}>
-          <form onSubmit={createElection} style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem", alignItems: "flex-end" }}>
-            <div className="input-group" style={{ flex: 1, minWidth: "250px", margin: 0 }}>
+          <form onSubmit={createElection} style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "2rem" }}>
+            <div className="input-group" style={{ margin: 0 }}>
               <label>Election Title</label>
               <input type="text" placeholder="e.g. Union President 2026" value={newElectionTitle} onChange={e => setNewElectionTitle(e.target.value)} required />
             </div>
-            <div className="input-group" style={{ flex: 2, minWidth: "300px", margin: 0 }}>
-              <label>Options (Comma Separated)</label>
-              <input type="text" placeholder="Candidate A, Candidate B" value={newElectionOptions} onChange={e => setNewElectionOptions(e.target.value)} required />
-            </div>
-            <button type="submit" className="btn" style={{ height: "42px" }}>Create Election</button>
+            
+            <label>Candidates</label>
+            {candidates.map((cand, idx) => (
+              <div key={idx} style={{ display: "flex", gap: "1rem", alignItems: "flex-end" }}>
+                <div className="input-group" style={{ flex: 1, margin: 0 }}>
+                  <input type="text" placeholder={`Candidate ${idx + 1} Name`} value={cand.name} onChange={e => {
+                    const newC = [...candidates];
+                    newC[idx].name = e.target.value;
+                    setCandidates(newC);
+                  }} />
+                </div>
+                <div className="input-group" style={{ flex: 1, margin: 0 }}>
+                  <input type="file" accept="image/*" onChange={e => {
+                    const newC = [...candidates];
+                    newC[idx].file = e.target.files?.[0] || null;
+                    setCandidates(newC);
+                  }} />
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={() => setCandidates([...candidates, {name: "", file: null}])} className="btn btn-secondary" style={{ width: "fit-content" }}>+ Add Another Candidate</button>
+
+            <button type="submit" className="btn" style={{ height: "42px", marginTop: "1rem" }} disabled={adUploading}>{adUploading ? "Creating..." : "Create Election"}</button>
           </form>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem" }}>
@@ -488,7 +558,10 @@ export default function AdminDashboardPage() {
               elections.map(election => {
                 // Calculate votes for each option
                 const voteCounts: Record<string, number> = {};
-                election.options.forEach((opt: string) => voteCounts[opt] = 0);
+                election.options.forEach((opt: any) => {
+                  const name = typeof opt === 'string' ? opt : opt.name;
+                  voteCounts[name] = 0;
+                });
                 let totalVotes = 0;
                 
                 if (election.votes) {
@@ -522,17 +595,24 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                      {election.options.map((opt: string) => {
-                        const count = voteCounts[opt] || 0;
+                      {election.options.map((opt: any) => {
+                        const name = typeof opt === 'string' ? opt : opt.name;
+                        const photoUrl = typeof opt === 'string' ? '' : opt.photoUrl;
+                        const count = voteCounts[name] || 0;
                         const percentage = totalVotes === 0 ? 0 : Math.round((count / totalVotes) * 100);
                         return (
-                          <div key={opt}>
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem", fontSize: "0.875rem" }}>
-                              <span>{opt}</span>
-                              <span style={{ fontWeight: "bold" }}>{count} votes ({percentage}%)</span>
-                            </div>
-                            <div style={{ width: "100%", height: "12px", background: "rgba(255,255,255,0.1)", borderRadius: "6px", overflow: "hidden" }}>
-                              <div style={{ width: `${percentage}%`, height: "100%", background: "var(--primary-color)", borderRadius: "6px" }} />
+                          <div key={name} style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                            {photoUrl && (
+                              <img src={photoUrl} alt={name} style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />
+                            )}
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem", fontSize: "0.875rem" }}>
+                                <span>{name}</span>
+                                <span style={{ fontWeight: "bold" }}>{count} votes ({percentage}%)</span>
+                              </div>
+                              <div style={{ width: "100%", height: "12px", background: "rgba(255,255,255,0.1)", borderRadius: "6px", overflow: "hidden" }}>
+                                <div style={{ width: `${percentage}%`, height: "100%", background: "var(--primary-color)", borderRadius: "6px" }} />
+                              </div>
                             </div>
                           </div>
                         );
@@ -549,24 +629,29 @@ export default function AdminDashboardPage() {
 
       <div className="card" style={{ padding: 0, marginTop: "2rem" }}>
         <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
-          <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Login Page Ads Management</h2>
-          <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Manage the scrolling images and videos displayed on the login page.</p>
+          <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Dashboard Highlights & Media</h2>
+          <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Manage the scrolling images, videos, and music displayed on the member dashboards.</p>
         </div>
         
         <div style={{ padding: "1.5rem" }}>
-          <form onSubmit={addAd} style={{ display: "flex", gap: "1rem", marginBottom: "2rem", alignItems: "flex-end" }}>
-            <div className="input-group" style={{ flex: 1, margin: 0 }}>
-              <label>Media URL</label>
-              <input type="url" placeholder="https://..." value={newAd.url} onChange={e => setNewAd({...newAd, url: e.target.value})} required />
+          <form onSubmit={addAd} style={{ display: "flex", gap: "1rem", marginBottom: "2rem", alignItems: "flex-end", flexWrap: "wrap" }}>
+            <div className="input-group" style={{ flex: 1, margin: 0, minWidth: "200px" }}>
+              <label>Upload Media File</label>
+              <input type="file" accept="image/*,video/*,audio/*" onChange={e => setAdFile(e.target.files?.[0] || null)} />
+            </div>
+            <div className="input-group" style={{ flex: 1, margin: 0, minWidth: "200px" }}>
+              <label>OR External Media URL</label>
+              <input type="url" placeholder="https://..." value={newAd.url} onChange={e => setNewAd({...newAd, url: e.target.value})} />
             </div>
             <div className="input-group" style={{ width: "150px", margin: 0 }}>
               <label>Type</label>
               <select value={newAd.type} onChange={e => setNewAd({...newAd, type: e.target.value})}>
                 <option value="image">Image</option>
                 <option value="video">Video</option>
+                <option value="audio">Music/Audio</option>
               </select>
             </div>
-            <button type="submit" className="btn">Add Media</button>
+            <button type="submit" className="btn" disabled={adUploading}>{adUploading ? "Uploading..." : "Add Media"}</button>
           </form>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "1.5rem" }}>
@@ -574,6 +659,10 @@ export default function AdminDashboardPage() {
               <div key={ad.id} style={{ border: "1px solid var(--border-color)", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
                 {ad.type === "video" ? (
                   <video src={ad.url} style={{ width: "100%", height: "150px", objectFit: "cover" }} controls />
+                ) : ad.type === "audio" ? (
+                  <div style={{ padding: "1rem", height: "150px", display: "flex", alignItems: "center", background: "var(--bg-color)" }}>
+                    <audio src={ad.url} style={{ width: "100%" }} controls />
+                  </div>
                 ) : (
                   <img src={ad.url} alt="Ad" style={{ width: "100%", height: "150px", objectFit: "cover" }} />
                 )}
@@ -584,7 +673,7 @@ export default function AdminDashboardPage() {
               </div>
             ))}
             {ads.length === 0 && (
-              <div style={{ color: "var(--text-secondary)" }}>No ads configured.</div>
+              <div style={{ color: "var(--text-secondary)" }}>No media configured.</div>
             )}
           </div>
         </div>

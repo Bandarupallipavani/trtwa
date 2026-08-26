@@ -25,6 +25,7 @@ export default function MembersPage() {
   const [currentUserData, setCurrentUserData] = useState<any>(null);
   const [newsText, setNewsText] = useState("");
   const [newsFile, setNewsFile] = useState<File | null>(null);
+  const [signatureUrl, setSignatureUrl] = useState("");
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
@@ -43,9 +44,17 @@ export default function MembersPage() {
       const membersData = snapshot.docs.map(d => ({ ...d.data(), uid: d.id })) as Member[];
       setMembers(membersData);
     });
+    
+    const unsubscribeSettings = onSnapshot(doc(db, "settings", "general"), (docSnap) => {
+      if (docSnap.exists()) {
+        setSignatureUrl(docSnap.data().signatureUrl || "");
+      }
+    });
+
     return () => {
       unsubscribeAuth();
       unsubscribe();
+      unsubscribeSettings();
     };
   }, []);
 
@@ -147,6 +156,7 @@ export default function MembersPage() {
                 
                 <div style="display: flex; gap: 15px; align-items: flex-end; width: 100%; position: relative; z-index: 1; margin-top: auto;">
                   <div class="signature" style="margin-top: 0;">
+                    ${signatureUrl ? `<img src="${signatureUrl}" style="height: 35px; max-width: 150px; object-fit: contain; margin-bottom: -5px; display: block;" />` : ''}
                     <div class="sig-line"></div>
                     <div class="sig-text">Authorised Signature</div>
                   </div>
