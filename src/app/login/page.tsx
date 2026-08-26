@@ -23,7 +23,7 @@ export default function LoginPage() {
 
     try {
       if (loginMode === "admin") {
-        const allowedAdmins = ["admin@trtwa.com", "admin2@gmail.com", "admin@test1", "admin@test2"];
+        const allowedAdmins = ["admin@trtwa.com", "admin2@gmail.com", "admin@test1.com", "admin@test2.com", "admin@test1", "admin@test2"];
         if (!allowedAdmins.includes(username)) {
           setError("You do not have admin access.");
           setLoading(false);
@@ -31,7 +31,7 @@ export default function LoginPage() {
         }
       }
 
-      if (username === "admin@test1" || username === "admin@test2") {
+      if (username === "admin@test1.com" || username === "admin@test2.com" || username === "admin@test1" || username === "admin@test2") {
         try {
           await signInWithEmailAndPassword(auth, username, password);
         } catch (adminErr: any) {
