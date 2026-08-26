@@ -179,16 +179,17 @@ h1, h2, h3, h4, h5, h6 {
     justify-content: center;
     gap: 1rem;
   }
-  /* Make tables scrollable on mobile */
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    width: 100%;
-    display: block;
-  }
-  table {
-    min-width: 600px; /* force a minimum width so columns don't crush */
-  }
+}
+
+/* Make tables scrollable on all screen sizes if they overflow */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  display: block;
+}
+table {
+  min-width: 600px; /* force a minimum width so columns don't crush */
 }
 
 @keyframes pulse {

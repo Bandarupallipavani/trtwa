@@ -385,7 +385,7 @@ export default function AdminDashboardPage() {
                 <td style={{ padding: "1rem 1.5rem", whiteSpace: "nowrap" }}>{member.phone}</td>
                 <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem", maxWidth: "200px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={member.address}>{member.address || "N/A"}</td>
                 <td style={{ padding: "1rem 1.5rem", fontSize: "0.875rem" }}>{member.password || "Not Available"}</td>
-                <td style={{ padding: "1rem 1.5rem", display: "flex", gap: "0.5rem" }}>
+                <td style={{ padding: "1rem 1.5rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                   <button 
                     className={member.isPermitted ? "btn" : "btn btn-secondary"} 
                     style={{ padding: "0.5rem 1rem", fontSize: "0.875rem", background: member.isPermitted ? "var(--success-color)" : "" }}
