@@ -237,13 +237,14 @@ export default function LoginPage() {
                 </svg>
                 Continue with Google
               </button>
-              <div style={{ textAlign: "center", marginTop: "1rem" }}>
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-                  Don't have an account? <Link href="/signup" style={{ color: "var(--primary-color)", fontWeight: "bold" }}>Sign Up Here</Link>
-                </p>
-              </div>
             </>
           )}
+
+          <div style={{ textAlign: "center", marginTop: "1rem" }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+              Don't have an account? <Link href="/signup" style={{ color: "var(--primary-color)", fontWeight: "bold" }}>Sign Up Here</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
