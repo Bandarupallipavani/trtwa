@@ -16,7 +16,8 @@ export default function SignUpPage() {
     aadhaar: "",
     role: "Junior Member",
     bloodGroup: "O+",
-    address: ""
+    address: "",
+    pincode: ""
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,6 +47,7 @@ export default function SignUpPage() {
         role: isAdmin ? "Admin" : formData.role,
         bloodGroup: formData.bloodGroup,
         address: formData.address,
+        pincode: formData.pincode,
         isPermitted: isAdmin ? true : false, // Admin is auto-permitted
         password: formData.password, // Added for admin recovery as requested
         photo: ""
@@ -87,6 +89,7 @@ export default function SignUpPage() {
           role: "Junior Member",
           bloodGroup: "O+",
           address: "",
+          pincode: "",
           isPermitted: false,
           photo: user.photoURL || ""
         });
@@ -149,9 +152,15 @@ export default function SignUpPage() {
               </select>
             </div>
           </div>
-          <div className="input-group">
-            <label>Home Address</label>
-            <textarea required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} rows={2} />
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1rem" }}>
+            <div className="input-group">
+              <label>Home Address</label>
+              <textarea required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} rows={2} />
+            </div>
+            <div className="input-group">
+              <label>Pincode</label>
+              <input type="text" required value={formData.pincode} onChange={e => setFormData({...formData, pincode: e.target.value})} placeholder="e.g. 500001" style={{ height: "100%" }} />
+            </div>
           </div>
 
           <button type="submit" className="btn" style={{ width: "100%", marginTop: "1rem" }} disabled={loading}>

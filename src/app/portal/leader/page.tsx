@@ -20,6 +20,7 @@ export default function LeaderPortal() {
   const [showIdentityForm, setShowIdentityForm] = useState(false);
   const [aadhaarInput, setAadhaarInput] = useState("");
   const [idPhotoFile, setIdPhotoFile] = useState<File | null>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -121,20 +122,29 @@ export default function LeaderPortal() {
     if (typeof id !== "string") return;
     setUploading(true);
     try {
-      let photoUrl = user.idPhotoUrl || "";
+      let idUrl = user.idPhotoUrl || "";
       if (idPhotoFile) {
         const fileRef = ref(storage, `id_photos/${id}_${Date.now()}`);
         await uploadBytes(fileRef, idPhotoFile);
-        photoUrl = await getDownloadURL(fileRef);
+        idUrl = await getDownloadURL(fileRef);
+      }
+
+      let profileUrl = user.photo || "";
+      if (profilePhotoFile) {
+        const fileRef = ref(storage, `profiles/${id}_${Date.now()}`);
+        await uploadBytes(fileRef, profilePhotoFile);
+        profileUrl = await getDownloadURL(fileRef);
       }
       
       await updateDoc(doc(db, "members", id), {
         aadhaar: aadhaarInput || user.aadhaar || "",
-        idPhotoUrl: photoUrl
+        idPhotoUrl: idUrl,
+        photo: profileUrl
       });
       setShowIdentityForm(false);
       setIdPhotoFile(null);
-      alert("Identity Details Updated Successfully!");
+      setProfilePhotoFile(null);
+      alert("Details Updated Successfully!");
     } catch (err) {
       console.error(err);
       alert("Error updating identity details.");
@@ -270,9 +280,14 @@ export default function LeaderPortal() {
                   <input type="text" value={aadhaarInput} onChange={e => setAadhaarInput(e.target.value)} placeholder="Enter Aadhaar Number" />
                 </div>
                 <div className="input-group" style={{ margin: 0 }}>
+                  <label>Upload Profile Photo (Selfie)</label>
+                  <input type="file" accept="image/*" onChange={e => setProfilePhotoFile(e.target.files?.[0] || null)} />
+                  <small style={{ color: "var(--text-secondary)" }}>Choose camera to take a selfie or select from gallery.</small>
+                </div>
+                <div className="input-group" style={{ margin: 0 }}>
                   <label>Upload ID Card Photo</label>
-                  <input type="file" accept="image/*" capture="environment" onChange={e => setIdPhotoFile(e.target.files?.[0] || null)} />
-                  <small style={{ color: "var(--text-secondary)" }}>Take a photo using your camera or select from gallery.</small>
+                  <input type="file" accept="image/*" onChange={e => setIdPhotoFile(e.target.files?.[0] || null)} />
+                  <small style={{ color: "var(--text-secondary)" }}>Choose camera to snap a photo or select from gallery.</small>
                 </div>
                 <div style={{ display: "flex", gap: "1rem" }}>
                   <button type="submit" className="btn" disabled={uploading}>
