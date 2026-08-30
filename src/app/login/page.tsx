@@ -90,8 +90,18 @@ export default function LoginPage() {
         const userData = docSnap.data();
         localStorage.setItem("trtwa_current_user", userData.name);
         
-        if (userData.role === "Admin" || userData.role === "Union Admin") {
+        if (userData.role === "Super Admin") {
+          router.push("/portal/super-admin");
+        } else if (userData.role === "Union Admin") {
+          router.push("/portal/union-admin");
+        } else if (userData.role === "Admin") {
           router.push("/admin");
+        } else if (userData.role === "Leader") {
+          router.push("/portal/leader");
+        } else if (userData.role === "Technician") {
+          router.push("/portal/technician");
+        } else if (userData.role === "Sales Union") {
+          router.push("/portal/sales");
         } else {
           router.push(`/user/${user.uid}`);
         }
@@ -119,8 +129,18 @@ export default function LoginPage() {
         const userData = docSnap.data();
         localStorage.setItem("trtwa_current_user", userData.name);
         
-        if (userData.role === "Admin" || userData.role === "Union Admin") {
+        if (userData.role === "Super Admin") {
+          router.push("/portal/super-admin");
+        } else if (userData.role === "Union Admin") {
+          router.push("/portal/union-admin");
+        } else if (userData.role === "Admin") {
           router.push("/admin");
+        } else if (userData.role === "Leader") {
+          router.push("/portal/leader");
+        } else if (userData.role === "Technician") {
+          router.push("/portal/technician");
+        } else if (userData.role === "Sales Union") {
+          router.push("/portal/sales");
         } else {
           router.push(`/user/${user.uid}`);
         }
