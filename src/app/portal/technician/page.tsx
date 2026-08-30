@@ -191,7 +191,7 @@ export default function TechnicianPortal() {
       )}
 
       <div className="responsive-flex-wrap" style={{ display: "flex", gap: "2rem", alignItems: "flex-start" }}>
-        <div className="card" className="mobile-w-full flex-row-mobile-col" style={{ flex: "1 1 500px", gap: "2rem", alignItems: "flex-start" }}>
+        <div className="card mobile-w-full flex-row-mobile-col" style={{ flex: "1 1 500px", gap: "2rem", alignItems: "flex-start" }}>
         {user.photo ? (
           <img src={user.photo} alt={user.name} style={{ width: "150px", height: "150px", borderRadius: "50%", objectFit: "cover" }} />
         ) : (
@@ -285,7 +285,7 @@ export default function TechnicianPortal() {
           </div>
         </div>
         </div>
-        <div className="card" className="mobile-w-full" style={{ flex: "1 1 350px", padding: 0 }}>
+        <div className="card mobile-w-full" style={{ flex: "1 1 350px", padding: 0 }}>
           <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
             <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Daily News & Updates</h2>
             <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Latest announcements from TRT Union Admin</p>
@@ -320,7 +320,7 @@ export default function TechnicianPortal() {
           </div>
         </div>
         
-        <div className="card" className="mobile-w-full" style={{ flex: "1 1 350px", padding: 0 }}>
+        <div className="card mobile-w-full" style={{ flex: "1 1 350px", padding: 0 }}>
           <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
             <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Active Union Votes</h2>
             <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Cast your vote for active union elections.</p>
