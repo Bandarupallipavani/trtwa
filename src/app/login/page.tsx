@@ -190,9 +190,9 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "4rem auto", padding: "0 1rem", display: "flex", flexWrap: "wrap", gap: "3rem", alignItems: "center", justifyContent: "center" }}>
+    <div className="responsive-flex-wrap" style={{ maxWidth: "1100px", margin: "4rem auto", padding: "0 1rem", gap: "3rem", alignItems: "center", justifyContent: "center" }}>
       {ads.length > 0 && (
-        <div style={{ flex: "1 1 450px", maxWidth: "550px", overflow: "hidden", borderRadius: "12px", background: "rgba(255,255,255,0.05)", padding: "1.5rem" }}>
+        <div className="mobile-w-full" style={{ flex: "1 1 450px", maxWidth: "550px", overflow: "hidden", borderRadius: "12px", background: "rgba(255,255,255,0.05)", padding: "1.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
             <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Union Highlights</h2>
             <span style={{ fontSize: "0.875rem", background: "var(--primary-color)", color: "white", padding: "0.25rem 0.75rem", borderRadius: "999px" }}>
@@ -213,7 +213,7 @@ export default function LoginPage() {
         </div>
       )}
 
-      <div style={{ flex: "1 1 350px", maxWidth: "400px" }}>
+      <div className="mobile-w-full" style={{ flex: "1 1 350px", maxWidth: "400px" }}>
         <div className="card">
           <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
             <button 

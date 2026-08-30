@@ -136,7 +136,7 @@ export default function SignUpPage() {
             <label>Aadhaar Number</label>
             <input type="text" required value={formData.aadhaar} onChange={e => setFormData({...formData, aadhaar: e.target.value})} placeholder="e.g. 123456789012" />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <div className="grid-2-mobile-1" style={{ gap: "1rem" }}>
             <div className="input-group">
               <label>Role</label>
               <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
@@ -152,7 +152,7 @@ export default function SignUpPage() {
               </select>
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "1rem" }}>
+          <div className="grid-2-mobile-1" style={{ gap: "1rem" }}>
             <div className="input-group">
               <label>Home Address</label>
               <textarea required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} rows={2} />

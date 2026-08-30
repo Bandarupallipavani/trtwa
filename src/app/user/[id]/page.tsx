@@ -162,7 +162,7 @@ export default function UserProfilePage() {
         </div>
       )}
       
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+      <div className="flex-row-mobile-col mobile-gap-sm mobile-mt" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <h1 className="heading-1" style={{ margin: 0 }}>My Profile</h1>
         <Link href="/union" className="btn">Go to Union Chat</Link>
       </div>
@@ -170,7 +170,7 @@ export default function UserProfilePage() {
       {ads.length > 0 && (
         <div className="card" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
           <h2 className="heading-2" style={{ margin: "0 0 1rem 0", fontSize: "1.25rem" }}>Dashboard Highlights</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "1.5rem" }}>
+          <div className="grid-3-mobile-1" style={{ gap: "1.5rem" }}>
             {ads.map(ad => (
               <div key={ad.id} style={{ border: "1px solid var(--border-color)", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
                 {ad.type === "video" ? (
@@ -188,8 +188,8 @@ export default function UserProfilePage() {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: "2rem", alignItems: "flex-start", flexWrap: "wrap" }}>
-        <div className="card" style={{ flex: "1 1 500px", display: "flex", gap: "2rem", alignItems: "flex-start" }}>
+      <div className="responsive-flex-wrap" style={{ display: "flex", gap: "2rem", alignItems: "flex-start" }}>
+        <div className="card" className="mobile-w-full flex-row-mobile-col" style={{ flex: "1 1 500px", gap: "2rem", alignItems: "flex-start" }}>
         {user.photo ? (
           <img src={user.photo} alt={user.name} style={{ width: "150px", height: "150px", borderRadius: "50%", objectFit: "cover" }} />
         ) : (
@@ -213,7 +213,7 @@ export default function UserProfilePage() {
             {user.role}
           </div>
           
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <div className="grid-2-mobile-1" style={{ gap: "1rem" }}>
             <div>
               <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", margin: 0 }}>Union ID</p>
               <p style={{ fontWeight: 600, fontSize: "1.125rem", margin: "0.25rem 0 0 0" }}>{user.id}</p>
@@ -288,7 +288,7 @@ export default function UserProfilePage() {
           </div>
         </div>
         </div>
-        <div className="card" style={{ flex: "1 1 350px", padding: 0 }}>
+        <div className="card" className="mobile-w-full" style={{ flex: "1 1 350px", padding: 0 }}>
           <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
             <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Daily News & Updates</h2>
             <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Latest announcements from TRT Union Admin</p>
@@ -323,7 +323,7 @@ export default function UserProfilePage() {
           </div>
         </div>
         
-        <div className="card" style={{ flex: "1 1 350px", padding: 0 }}>
+        <div className="card" className="mobile-w-full" style={{ flex: "1 1 350px", padding: 0 }}>
           <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
             <h2 className="heading-2" style={{ margin: 0, fontSize: "1.25rem" }}>Active Union Votes</h2>
             <p className="text-body" style={{ margin: "0.5rem 0 0 0", fontSize: "0.875rem" }}>Cast your vote for active union elections.</p>

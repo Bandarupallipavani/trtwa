@@ -322,7 +322,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+      <div className="flex-row-mobile-col mobile-gap-sm mobile-mt" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <h1 className="heading-1" style={{ margin: 0 }}>Admin Dashboard</h1>
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
           <button onClick={() => setShowPasswordModal(true)} className="btn btn-secondary">Change My Password</button>
@@ -694,7 +694,7 @@ export default function AdminDashboardPage() {
             <button type="submit" className="btn" disabled={adUploading}>{adUploading ? "Uploading..." : "Add Media"}</button>
           </form>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "1.5rem" }}>
+          <div className="grid-3-mobile-1" style={{ gap: "1.5rem" }}>
             {ads.map(ad => (
               <div key={ad.id} style={{ border: "1px solid var(--border-color)", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
                 {ad.type === "video" ? (
